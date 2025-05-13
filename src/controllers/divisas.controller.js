@@ -1,43 +1,50 @@
-const bancoCentralService = require('../services/bancoCentral.service.js'); // Asegúrate que la ruta sea correcta
+// En src/controllers/divisas.controller.js
+const bancoCentralService = require('../services/bancoCentral.service');
 
-const obtenerValorDolar = async (req, res) => {
-  try {
-    const valorDolar = await bancoCentralService.getDolarRate();
-    res.json({ valor_dolar: valorDolar });
-  } catch (error) {
-    // Es buena práctica loggear el error en el servidor para debugging
-    console.error('Error en obtenerValorDolar:', error.message);
-    res.status(500).json({ error: error.message || 'Error al obtener el valor del dólar.' });
-  }
+exports.obtenerTasaDolarActual = async (req, res) => {
+    try {
+        const tasa = await bancoCentralService.getDolarRate();
+        // Log para depuración: ver qué devuelve el servicio
+        console.log('[DivisasController] Tasa recibida del servicio:', tasa);
+
+        if (tasa && typeof tasa.valor === 'number' && tasa.fecha) { // Verificación más robusta
+            res.json(tasa);
+        } else {
+            console.error('[DivisasController] La tasa obtenida del servicio no es válida o no contiene un valor numérico y una fecha:', tasa);
+            res.status(500).json({ error: 'No se pudo obtener una tasa de dólar válida del servicio.' });
+        }
+    } catch (error) {
+        console.error("Error en divisasController.obtenerTasaDolarActual:", error);
+        res.status(500).json({
+            error: 'Error al obtener la tasa del dólar.',
+            detalle: error.message || 'Error interno del servidor'
+        });
+    }
 };
 
-const convertirMonto = async (req, res) => {
-  const { montoUSD } = req.body;
+exports.convertirMoneda = async (req, res) => {
+    const { montoUSD } = req.body;
 
-  if (montoUSD === undefined) {
-    return res.status(400).json({ error: 'El campo montoUSD es requerido.' });
-  }
-  if (typeof montoUSD !== 'number' || isNaN(montoUSD)) {
-    return res.status(400).json({ error: 'El campo montoUSD debe ser un número.' });
-  }
-  if (montoUSD < 0) {
-    return res.status(400).json({ error: 'El campo montoUSD no puede ser negativo.' });
-  }
+    if (montoUSD === undefined || typeof montoUSD !== 'number' || montoUSD <= 0) {
+        return res.status(400).json({ error: 'El campo montoUSD es requerido y debe ser un número positivo.' });
+    }
 
-  try {
-    const valorDolar = await bancoCentralService.getDolarRate();
-    const resultado = montoUSD * valorDolar;
-    // Formatear a 2 decimales para montos monetarios
-    res.json({ montoCLP: parseFloat(resultado.toFixed(2)) });
-  } catch (error) {
-    // Es buena práctica loggear el error en el servidor para debugging
-    console.error('Error en convertirMonto:', error.message);
-    // Devolver el mensaje de error del servicio si está disponible, o uno genérico
-    res.status(500).json({ error: error.message || 'Error al convertir el monto.' });
-  }
-};
+    try {
+        const tasaInfo = await bancoCentralService.getDolarRate();
+        if (!tasaInfo || tasaInfo.valor === undefined) {
+            return res.status(500).json({ error: 'No se pudo obtener la tasa de conversión actual.' });
+        }
 
-module.exports = {
-  obtenerValorDolar,
-  convertirMonto
+        const montoCLP = parseFloat((montoUSD * tasaInfo.valor).toFixed(2));
+
+        res.json({
+            montoUSD: montoUSD,
+            tasaConversion: tasaInfo.valor,
+            montoCLP: montoCLP,
+            fechaTasa: tasaInfo.fecha
+        });
+    } catch (error) {
+        console.error("Error en divisasController.convertirMoneda:", error);
+        res.status(500).json({ error: 'Error al realizar la conversión de divisa.', detalle: error.message });
+    }
 };

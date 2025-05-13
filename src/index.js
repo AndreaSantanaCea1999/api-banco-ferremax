@@ -2,11 +2,6 @@
 require('dotenv').config();
     const app = require('./app'); // Importar la configuración de la app desde app.js
 
-// Importar las rutas de divisas
-// Asegúrate de que la ruta al archivo de rutas sea correcta
-    // const divisasRoutes = require('./routes/divisas.routes.js'); // Esto ya debería estar en app.js
-    // app.use('/api/divisas', divisasRoutes); // Esto ya debería estar en app.js
-    
 // Una ruta de bienvenida simple para probar que el servidor funciona
 app.get('/', (req, res) => {
   res.send('¡Bienvenido a la API de FERREMAS - Banco!');

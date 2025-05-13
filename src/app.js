@@ -10,7 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/divisas', divisasRoutes);
+    app.use('/api/divisas', divisasRoutes);
     app.use('/api/pedidos', pedidosRoutes);
     app.use('/api/catalogo', catalogoRoutes); // Montar las rutas del catálogo
     

@@ -5,6 +5,7 @@ const webpayService = require('../services/webpay.service');
 const bancoCentralService = require('../services/bancoCentral.service'); // Importar el servicio completo
 const inventarioService = require('../services/inventario.service'); // Para interactuar con API de Inventario
 const axios = require('axios'); // Importar axios para verificar si el error es de red
+const ProductoModel = require('../models/producto.db.model'); // ASUNCIÓN: Tienes un modelo para tu tabla PRODUCTOS local
 
 // POST /api/pedidos
 exports.crearPedido = async (req, res) => {
@@ -24,17 +25,24 @@ exports.crearPedido = async (req, res) => {
     }
 
     try { // Un solo try-catch para todas las operaciones del item que pueden fallar (obtener producto, verificar stock)
-      // 1. Obtener información del producto (precio, nombre) desde la API de Inventario
-      const productoInventario = await inventarioService.obtenerProductoDeInventario(item.productoId);
+// Primero, obtener el ID_Producto numérico local desde tu tabla PRODUCTOS usando el código
+      const productoLocal = await ProductoModel.obtenerPorCodigo(item.productoId);
+      if (!productoLocal || !productoLocal.ID_Producto) {
+        // Si el producto no se encuentra en tu BD local por código, no podemos proceder.
+        return res.status(400).json({ error: `Producto con código '${item.productoId}' no encontrado o sin ID válido en la base de datos local.` });
+      }
+      const idProductoLocalNumerico = productoLocal.ID_Producto;
+
+      // 1. Obtener información del producto (precio, nombre) desde la API de Inventario usando el ID numérico
+      const productoInventario = await inventarioService.obtenerProductoDeInventario(idProductoLocalNumerico);
       if (!productoInventario) {
-        return res.status(400).json({ error: `Producto con ID '${item.productoId}' no fue encontrado en el sistema de inventario o no se pudo obtener su información.` });
+        return res.status(400).json({ error: `Producto con ID local '${idProductoLocalNumerico}' (código: ${item.productoId}) no fue encontrado en el sistema de inventario externo o no se pudo obtener su información.` });
       }
 
       // Usar el precio de la API de inventario para mayor seguridad y consistencia
-      const precioReal = productoInventario.Precio_Venta; // Ajusta 'Precio_Venta' al nombre real del campo en tu API de inventario
-
+      const precioReal = productoInventario.Precio_Venta; // Asegúrate que este campo exista en la respuesta de la API de Inventario
       // 2. Verificar stock desde la API de Inventario
-      const stockDisponible = await inventarioService.verificarStockEnInventario(item.productoId, sucursalId);
+            const stockDisponible = await inventarioService.verificarStockEnInventario(idProductoLocalNumerico, sucursalId);
       if (item.cantidad <= 0 || item.cantidad > stockDisponible) { // Validar cantidad positiva y stock
         return res.status(400).json({ error: `Stock insuficiente para ${productoInventario.Nombre || `producto ${item.productoId}`}. Disponible: ${stockDisponible}, Solicitado: ${item.cantidad}`});
       }
@@ -42,6 +50,7 @@ exports.crearPedido = async (req, res) => {
       totalPedido += item.cantidad * precioReal;
       itemsConInfoInventario.push({
         ...item, // productoId, cantidad (precioUnitario del request se ignora si usamos precioReal)
+        idProductoLocal: idProductoLocalNumerico, // Guardar el ID numérico local
         precioReal,
         nombreProducto: productoInventario.Nombre || `Producto ${item.productoId}` // Usar un placeholder si el nombre no viene
       });
@@ -119,6 +128,7 @@ exports.crearPedido = async (req, res) => {
   // Usar la información ya obtenida de la API de inventario
   const detallesItemsParaBD = itemsConInfoInventario.map(item => {
     return {
+      ID_Producto: item.idProductoLocal,
       productoIdExterno: item.productoId,
       nombreProducto: item.nombreProducto, // Nombre obtenido del inventario
       cantidad: item.cantidad,
@@ -340,7 +350,7 @@ exports.confirmacionWebpay = async (req, res) => {
       const detallesDelPedido = await PedidoDB.obtenerDetallesPorPedidoId(pedidoId);
       for (const detalle of detallesDelPedido) {
         try {
-          await inventarioService.actualizarStockEnInventario(detalle.ProductoIdExterno, sucursalDelPedido, detalle.Cantidad, pedidoId); // La función en el servicio manejará la cantidad negativa
+          await inventarioService.actualizarStockEnInventario(detalle.ID_Producto, sucursalDelPedido, detalle.Cantidad, pedidoId);
           console.log(`Actualización de stock solicitada para producto ${detalle.ProductoIdExterno}, cantidad ${detalle.Cantidad}, sucursal ${sucursalDelPedido}`);
         } catch (invError) {
           console.error(`[WebpayConfirmacion] Error al intentar actualizar stock para producto ${detalle.ProductoIdExterno} del pedido ${pedidoId}: ${invError.message}. El pedido está PAGADO pero el stock podría estar inconsistente.`);

@@ -24,5 +24,4 @@ const config = {
 
 const getConfig = () => config;
 
-
 module.exports = { getConfig, config }; // Exportar tanto la función como el objeto directamente si se prefiere

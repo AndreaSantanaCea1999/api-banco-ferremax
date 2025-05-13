@@ -9,9 +9,11 @@ const ProductoModel = require('../models/producto.db.model'); // ASUNCIÓN: Tien
 
 // POST /api/pedidos
 exports.crearPedido = async (req, res) => {
+      console.log('[PedidosController] Iniciando crearPedido. req.body:', JSON.stringify(req.body, null, 2));
   // Extraer todos los campos necesarios del body, incluyendo los que necesita PedidoDB.crearPedidoConDetalles
   const { clienteId, items, moneda = 'CLP', montoUSD, sucursalId, usuarioId, vendedorId, metodoEntrega, direccionEntrega, ciudadEntrega, regionEntrega, paisEntrega, comentarios, fechaEstimadaEntrega, prioridad } = req.body;
 
+      console.log(`[PedidosController] Campos extraídos: clienteId=${clienteId}, sucursalId=${sucursalId}, usuarioId=${usuarioId}, items_length=${items?.length}`);
   if (!clienteId || !items || !Array.isArray(items) || items.length === 0 || !sucursalId || !usuarioId) {
     return res.status(400).json({ error: 'Datos incompletos: clienteId, items, sucursalId y usuarioId son requeridos.' });
   }

@@ -1,6 +1,7 @@
 const axios = require('axios');
 
-const { getConfig } = require('../config/config'); // Asumiendo que tienes un archivo de configuración
+const { getConfig } = require('../config/config'); // Esta línea ahora debería funcionar
+
 async function getDolarRate() {
     const appConfig = getConfig(); // Usar getConfig para obtener las URLs y keys
     const apiKey = process.env.BANCO_API_KEY || appConfig.bancoApiKey;

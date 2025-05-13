@@ -9,17 +9,20 @@ exports.obtenerProductos = async (req, res) => {
         res.json(productos);
     } catch (error) {
         console.error("Error en catalogoController.obtenerProductos:", error);  // Loggear el error completo
-        // Devolver el estado y mensaje de error de la API de inventario si está disponible
         let statusCode = 500;
-        let errorMessage = "Error al obtener productos del catálogo.";
+        let errorResponse = {
+            error: "Error al obtener productos del catálogo.", // Mensaje por defecto
+            detalle: error.message // Detalle por defecto
+        };
+
         if (axios.isAxiosError(error) && error.response) {
             statusCode = error.response.status;
-            errorMessage = error.response.data?.message || error.response.data?.error || errorMessage;
+            // Usar el mensaje de error de la API externa si está disponible, o uno más genérico si no.
+            errorResponse.error = error.response.data?.error || error.response.data?.message || `Error ${statusCode} al contactar el servicio de inventario.`;
+            // El objeto 'data' de la respuesta de error puede contener más detalles.
+            errorResponse.detalle = error.response.data || error.message;
         }
-        res.status(statusCode).json({
-            error: "Error al obtener productos del catálogo.",
-            detalle: error.response?.data || error.message
-        });
+        res.status(statusCode).json(errorResponse);
     }
 };
 
@@ -34,12 +37,16 @@ exports.obtenerProductoPorId = async (req, res) => {
     } catch (error) {
         console.error(`Error en catalogoController.obtenerProductoPorId (${productoId}):`, error); // Loggear el error completo
         let statusCode = 500;
+        let errorResponse = {
+            error: "Error al obtener el producto del catálogo.", // Mensaje por defecto
+            detalle: error.message // Detalle por defecto
+        };
+
         if (axios.isAxiosError(error) && error.response) {
             statusCode = error.response.status;
+            errorResponse.error = error.response.data?.error || error.response.data?.message || `Error ${statusCode} al contactar el servicio de inventario para el producto ${productoId}.`;
+            errorResponse.detalle = error.response.data || error.message;
         }
-        res.status(statusCode).json({
-            error: "Error al obtener el producto del catálogo.",
-            detalle: error.response?.data || error.message
-        });
+        res.status(statusCode).json(errorResponse);
     }
 };

@@ -18,59 +18,49 @@ exports.crearPedido = async (req, res) => {
   let totalPedido = 0;
   const itemsConInfoInventario = []; // Para almacenar info del inventario y evitar llamadas duplicadas
 
-  // Calcular total y validar items (simulación, en real se consultaría stock y precios de API inventario)
   for (const item of items) {
     if (!item.productoId || typeof item.cantidad !== 'number' || typeof item.precioUnitario !== 'number') {
       return res.status(400).json({ error: `Item inválido: ${JSON.stringify(item)}. Se requiere productoId (string), cantidad (number) y precioUnitario (number).` });
     }
-    try {
-      // 1. Obtener información del producto (precio, nombre) desde la API de Inventario
-      try {
+
+    try { // Un solo try-catch para todas las operaciones del item que pueden fallar (obtener producto, verificar stock)
       // 1. Obtener información del producto (precio, nombre) desde la API de Inventario
       const productoInventario = await inventarioService.obtenerProductoDeInventario(item.productoId);
       if (!productoInventario) {
-        // Esta condición se cumple si la API de Inventario devuelve 404 para el producto
         return res.status(400).json({ error: `Producto con ID '${item.productoId}' no fue encontrado en el sistema de inventario o no se pudo obtener su información.` });
       }
-      // ... resto del código para verificar stock y calcular total ...
-    } catch (invError) {
-      // Este catch se activa si hay un error de red o un error 5xx de la API de inventario,
-      // o si la API de inventario devuelve un error que no sea 404 y el servicio lo relanza.
-      console.error(`Error al consultar producto ${item.productoId} del inventario:`, invError);
-      let statusCode = 502; // Bad Gateway por defecto si la API externa falla
-      let errorMessage = `No se pudo verificar el producto ${item.productoId} del inventario.`;
-      if (axios.isAxiosError(invError) && invError.response) {
-          statusCode = invError.response.status;
-          // Usar el mensaje de error de la API de inventario si está disponible
-          errorMessage = invError.response.data?.error || invError.response.data?.message || errorMessage;
-      } else {
-          errorMessage = invError.message || errorMessage;
-      }
-      return res.status(statusCode).json({ error: `Error al interactuar con el inventario para el producto ${item.productoId}.`, detalle: errorMessage });
-    }
+
       // Usar el precio de la API de inventario para mayor seguridad y consistencia
       const precioReal = productoInventario.Precio_Venta; // Ajusta 'Precio_Venta' al nombre real del campo en tu API de inventario
 
       // 2. Verificar stock desde la API de Inventario
       const stockDisponible = await inventarioService.verificarStockEnInventario(item.productoId, sucursalId);
       if (item.cantidad <= 0 || item.cantidad > stockDisponible) { // Validar cantidad positiva y stock
-        return res.status(400).json({ error: `Stock insuficiente para ${productoInventario.Nombre || item.productoId}. Disponible: ${stockDisponible}, Solicitado: ${item.cantidad}`});
+        return res.status(400).json({ error: `Stock insuficiente para ${productoInventario.Nombre || `producto ${item.productoId}`}. Disponible: ${stockDisponible}, Solicitado: ${item.cantidad}`});
       }
 
       totalPedido += item.cantidad * precioReal;
       itemsConInfoInventario.push({
         ...item, // productoId, cantidad (precioUnitario del request se ignora si usamos precioReal)
         precioReal,
-        nombreProducto: productoInventario.Nombre || `Producto ${item.productoId}`
+        nombreProducto: productoInventario.Nombre || `Producto ${item.productoId}` // Usar un placeholder si el nombre no viene
       });
+
     } catch (invError) {
-      console.error(`Error al consultar producto ${item.productoId} del inventario:`, invError); // Loggear el error completo
+      console.error(`Error al procesar el item ${item.productoId} durante la interacción con el inventario:`, invError);
       let statusCode = 502; // Bad Gateway si la API externa falla
+      let errorMessage = `Error al interactuar con el inventario para el producto ${item.productoId}.`;
+      let errorDetail = invError.message;
+
       if (axios.isAxiosError(invError) && invError.response) {
           statusCode = invError.response.status; // Usar el código de estado de la API de inventario si está disponible
+          errorMessage = invError.response.data?.error || invError.response.data?.message || `Error ${statusCode} desde el servicio de inventario para el producto ${item.productoId}.`;
+          errorDetail = invError.response.data || invError.message;
+      } else {
+          errorMessage = invError.message || errorMessage; // Actualiza errorMessage si invError.message existe
+          errorDetail = invError.message || errorDetail; // Actualiza errorDetail si invError.message existe
       }
-      const errorMessage = invError.response?.data?.message || invError.message;
-      return res.status(statusCode).json({ error: `No se pudo verificar el producto ${item.productoId} del inventario.`, detalle: errorMessage });
+      return res.status(statusCode).json({ error: errorMessage, detalle: errorDetail });
     }
   }
 

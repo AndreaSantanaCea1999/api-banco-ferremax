@@ -28,3 +28,34 @@ exports.verificarStock = async (req, res) => {
         res.status(500).json({ error: 'Error interno al verificar stock.' });
     }
 };
+
+exports.actualizarInventario = async (req, res) => {
+    const idInventario = parseInt(req.params.id, 10);
+    const datosParaActualizar = req.body;
+
+    if (isNaN(idInventario)) {
+        return res.status(400).json({ error: 'El ID de inventario debe ser un número.' });
+    }
+
+    if (Object.keys(datosParaActualizar).length === 0) {
+        return res.status(400).json({ error: 'No se proporcionaron datos para actualizar.' });
+    }
+
+    // Validar que los campos a actualizar sean permitidos y tengan tipos correctos (ejemplo simple)
+    if (datosParaActualizar.Stock_Actual !== undefined && typeof datosParaActualizar.Stock_Actual !== 'number') {
+        return res.status(400).json({ error: 'Stock_Actual debe ser un número.' });
+    }
+    // Puedes añadir más validaciones para otros campos (Stock_Minimo, Stock_Maximo, etc.)
+
+    try {
+        const actualizado = await InventarioModel.actualizarRegistroInventario(idInventario, datosParaActualizar);
+        if (actualizado) {
+            res.json({ mensaje: `Registro de inventario con ID ${idInventario} actualizado correctamente.` });
+        } else {
+            res.status(404).json({ error: `Registro de inventario con ID ${idInventario} no encontrado o no se realizaron cambios.` });
+        }
+    } catch (error) {
+        console.error(`Error en inventarioController.actualizarInventario para ID ${idInventario}:`, error);
+        res.status(500).json({ error: 'Error interno al actualizar el registro de inventario.' });
+    }
+};

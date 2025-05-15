@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan'); // Opcional: para logging de peticiones HTTP
-require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') }); // Asegura que .env se cargue desde la raíz
+// dotenv.config() se maneja ahora en src/index.js (el punto de entrada principal)
 
 const app = express();
 

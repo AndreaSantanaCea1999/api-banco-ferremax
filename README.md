@@ -1,25 +1,48 @@
-# API Banco Ferremax
+# API Banco Ferremax (Node.js & Express)
 
-API RESTful para la gestión de clientes, cuentas bancarias y transacciones para "Banco Ferremax". Este proyecto está desarrollado con Spring Boot y utiliza una base de datos en memoria H2 para facilitar la demostración y el desarrollo.
+API RESTful para la gestión de operaciones bancarias y de divisas para "Banco Ferremax". Este proyecto está desarrollado con Node.js, Express y se conecta a una base de datos MySQL.
 
 ## Tecnologías Utilizadas
 
-*   **Lenguaje:** Java 17
-*   **Framework:** Spring Boot 3.2.5
-    *   Spring Web (para crear APIs REST)
-    *   Spring Data JPA (para la persistencia de datos)
-    *   Spring Boot Actuator (para monitorización básica)
-*   **Base de Datos:** H2 Database (en memoria)
-*   **Gestión de Dependencias:** Maven
-*   **Utilidades:** Lombok (para reducir código boilerplate)
+*   **Entorno de ejecución:** Node.js (especificar versión, ej: v18.x o LTS)
+*   **Framework:** Express.js
+*   **Base de Datos:** MySQL
+*   **Gestor de Paquetes:** npm (o yarn, si lo usas)
+*   **(Opcional)** Otros paquetes importantes (ej: `mysql2`, `sequelize`, `dotenv`, `jsonwebtoken`, `cors`, etc. - *Ajusta según tu `package.json`*)
 
 ## Prerrequisitos
 
-*   JDK 17 o superior instalado.
-*   Apache Maven 3.6 o superior instalado.
+*   Node.js (versión recomendada: LTS) instalado.
+*   npm (viene con Node.js) o yarn instalado.
+*   Servidor MySQL instalado y en ejecución.
 *   Un cliente API como Postman, Insomnia, o `curl` para probar los endpoints.
 
-## Configuración y Ejecución
+## Configuración del Entorno
+
+1.  **Crear la base de datos:**
+    Asegúrate de tener una base de datos MySQL creada para el proyecto (por ejemplo, `ferremax_db`).
+    *Nota: La consola indica "Conexión a MySQL (Pedidos DB) establecida correctamente (Pool)", así que podrías estar usando una base de datos llamada `Pedidos` o similar. Ajusta según sea necesario.*
+
+2.  **Variables de Entorno:**
+    Este proyecto utiliza variables de entorno para la configuración, especialmente para la conexión a la base de datos.
+    Crea un archivo `.env` en la raíz del proyecto a partir del archivo `.env.example` (si no existe, crea uno).
+
+    **`.env.example` (Ejemplo):**
+    ```
+    PORT=3001
+
+    DB_HOST=localhost
+    DB_USER=tu_usuario_mysql
+    DB_PASSWORD=tu_contraseña_mysql
+    DB_NAME=ferremax_db
+    DB_PORT=3306
+
+    # Otras variables que puedas necesitar (ej: JWT_SECRET)
+    ```
+
+    **Crea tu archivo `.env` y llénalo con tus credenciales y configuraciones locales.**
+
+## Instalación y Ejecución
 
 1.  **Clonar el repositorio:**
     ```bash
@@ -27,162 +50,103 @@ API RESTful para la gestión de clientes, cuentas bancarias y transacciones para
     cd api-banco-ferremax
     ```
 
-2.  **Compilar y empaquetar el proyecto:**
-    Desde la raíz del proyecto, ejecuta el siguiente comando Maven:
+2.  **Instalar dependencias:**
     ```bash
-    mvn clean package
+    npm install
     ```
-    Esto generará un archivo `.jar` en el directorio `target/`.
+    (O si usas yarn: `yarn install`)
 
-3.  **Ejecutar la aplicación:**
+3.  **Iniciar la aplicación:**
     ```bash
-    java -jar target/API-BancoFerremax-0.0.1-SNAPSHOT.jar
+    npm start
     ```
-    La aplicación se iniciará y estará disponible por defecto en `http://localhost:8080`.
-
-## Acceso a la Base de Datos H2
-
-Este proyecto utiliza una base de datos H2 en memoria. Puedes acceder a la consola H2 para inspeccionar la base de datos directamente desde tu navegador:
-
-*   **URL de la consola H2:** `http://localhost:8080/h2-console`
-*   **JDBC URL:** `jdbc:h2:mem:ferremaxdb`
-*   **User Name:** `sa`
-*   **Password:** `password` (o déjalo en blanco si así está configurado en `application.properties`)
-
-Asegúrate de que la aplicación esté en ejecución para acceder a la consola.
+    El servidor se iniciará y estará escuchando en `http://localhost:3001` (o el puerto que hayas configurado en tu archivo `.env`).
+    Deberías ver mensajes en la consola como:
+    ```
+    Cargando rutas de divisas...
+    Servidor API escuchando en el puerto 3001
+    Configuración de API del banco encontrada.
+    Conexión a MySQL (Pedidos DB) establecida correctamente (Pool).
+    ```
 
 ## Endpoints de la API
 
-La URL base para todos los endpoints es `http://localhost:8080/api`.
+La URL base para todos los endpoints es `http://localhost:3001/api` (o la ruta base que hayas configurado).
 
-### Clientes (`/api/clientes`)
+A continuación, se listan algunos endpoints posibles. **Deberás documentar los endpoints específicos de tu aplicación basándote en tu código (`src/routes/` o similar).**
+
+### Rutas de Divisas (`/api/divisas` - *ejemplo*)
+
+*   **`GET /`**: Obtiene información sobre divisas.
+    *   *(Detalla qué información devuelve y si acepta parámetros query)*
+*   **`POST /convertir`**: Realiza una conversión de divisas.
+    *   **Request Body (ejemplo):**
+        ```json
+        {
+          "monedaOrigen": "USD",
+          "monedaDestino": "CLP",
+          "monto": 100
+        }
+        ```
+
+### Clientes (`/api/clientes` - *ejemplo, si aplica*)
 
 *   **`GET /`**: Obtiene una lista de todos los clientes.
-*   **`GET /{id}`**: Obtiene un cliente específico por su `id`.
 *   **`POST /`**: Crea un nuevo cliente.
     *   **Request Body (ejemplo):**
         ```json
         {
-          "nombre": "Ana",
-          "apellido": "García",
-          "rut": "12345678-9",
-          "direccion": "Avenida Siempre Viva 742",
-          "telefono": "987654321",
-          "email": "ana.garcia@example.com"
+          "nombre": "Juan",
+          "apellido": "Perez",
+          "rut": "11222333-4"
         }
         ```
-*   **`PUT /{id}`**: Actualiza un cliente existente por su `id`.
-    *   **Request Body (ejemplo):** (similar al `POST`)
-*   **`DELETE /{id}`**: Elimina un cliente por su `id`.
 
-### Cuentas Bancarias (`/api/cuentas`)
+### Cuentas (`/api/cuentas` - *ejemplo, si aplica*)
 
-*   **`GET /`**: Obtiene una lista de todas las cuentas bancarias.
-*   **`GET /{id}`**: Obtiene una cuenta bancaria específica por su `id`.
-*   **`POST /`**: Crea una nueva cuenta bancaria.
-    *   **Request Body (ejemplo):**
-        ```json
-        {
-          "numeroCuenta": "001122334455",
-          "tipoCuenta": "AHORRO",
-          "saldo": 1500.75,
-          "clienteId": 1
-        }
-        ```
-        *Nota: `clienteId` debe corresponder a un cliente existente.*
-*   **`PUT /{id}`**: Actualiza una cuenta bancaria existente por su `id`.
-    *   **Request Body (ejemplo):** (similar al `POST`)
-*   **`DELETE /{id}`**: Elimina una cuenta bancaria por su `id`.
-*   **`GET /cliente/{clienteId}`**: Obtiene todas las cuentas bancarias asociadas a un `clienteId` específico.
+*   **`GET /cliente/{clienteId}`**: Obtiene las cuentas de un cliente.
+*   **`POST /`**: Crea una nueva cuenta.
 
-### Transacciones (`/api/transacciones`)
+### Transacciones (`/api/transacciones` - *ejemplo, si aplica*)
 
-*   **`GET /`**: Obtiene una lista de todas las transacciones.
-*   **`GET /{id}`**: Obtiene una transacción específica por su `id`.
-*   **`POST /`**: Realiza una nueva transacción (depósito, retiro o transferencia).
-    *   **Request Body (ejemplo para DEPÓSITO):**
-        ```json
-        {
-          "tipoTransaccion": "DEPOSITO",
-          "monto": 200.00,
-          "cuentaOrigenId": 1
-        }
-        ```
-    *   **Request Body (ejemplo para RETIRO):**
-        ```json
-        {
-          "tipoTransaccion": "RETIRO",
-          "monto": 50.00,
-          "cuentaOrigenId": 1
-        }
-        ```
-    *   **Request Body (ejemplo para TRANSFERENCIA):**
-        ```json
-        {
-          "tipoTransaccion": "TRANSFERENCIA",
-          "monto": 100.00,
-          "cuentaOrigenId": 1,
-          "cuentaDestinoId": 2
-        }
-        ```
-        *Notas:*
-        *   `cuentaOrigenId` es obligatoria para todos los tipos de transacción.
-        *   `cuentaDestinoId` es obligatoria solo para `TRANSFERENCIA`.
-        *   Los IDs de cuenta deben corresponder a cuentas existentes.
-        *   El sistema valida que haya saldo suficiente para retiros y transferencias.
-*   **`GET /cuenta/{cuentaId}`**: Obtiene todas las transacciones asociadas a un `cuentaId` específico (ya sea como origen o destino).
+*   **`POST /`**: Realiza una nueva transacción.
 
-## Estructura del Proyecto
+*Por favor, revisa tu directorio de rutas (usualmente `src/routes/`) para listar y detallar todos los endpoints correctamente, incluyendo métodos HTTP, parámetros de ruta, query params y cuerpos de solicitud/respuesta esperados.*
 
-El proyecto sigue una estructura típica de una aplicación Spring Boot:
+## Estructura del Proyecto (Ejemplo)
 
 ```
 api-banco-ferremax/
 ├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/bancoferremax/
-│   │   │       ├── APIBancoFerremaxApplication.java  (Clase principal de Spring Boot)
-│   │   │       ├── api/
-│   │   │       │   ├── controller/  (Controladores REST)
-│   │   │       │   ├── dto/         (Data Transfer Objects)
-│   │   │       │   ├── exception/   (Manejo de excepciones personalizadas)
-│   │   │       │   ├── model/       (Entidades JPA)
-│   │   │       │   ├── repository/  (Repositorios Spring Data JPA)
-│   │   │       │   └── service/     (Lógica de negocio)
-│   │   └── resources/
-│   │       ├── application.properties (Configuración de la aplicación)
-│   └── test/
-│       └── java/
-│           └── com/bancoferremax/ (Pruebas unitarias e de integración)
-├── pom.xml (Configuración del proyecto Maven)
-└── README.md (Este archivo)
+│   ├── controllers/  (Lógica de manejo de solicitudes)
+│   ├── routes/       (Definición de rutas de la API)
+│   ├── models/       (Modelos de datos, interacción con DB)
+│   ├── services/     (Lógica de negocio, opcional)
+│   ├── config/       (Configuración de DB, etc.)
+│   ├── middlewares/  (Middlewares personalizados)
+│   └── index.js      (Punto de entrada de la aplicación)
+├── .env              (Variables de entorno - NO SUBIR A GIT)
+├── .env.example      (Ejemplo de variables de entorno)
+├── package.json
+├── package-lock.json
+└── README.md         (Este archivo)
 ```
-
-*   **`controller`**: Maneja las solicitudes HTTP entrantes y delega a los servicios.
-*   **`dto`**: Objetos de Transferencia de Datos, usados para enviar y recibir datos a través de la API.
-*   **`exception`**: Clases para el manejo de excepciones personalizadas y un `GlobalExceptionHandler`.
-*   **`model`**: Entidades JPA que representan las tablas de la base de datos (`Cliente`, `CuentaBancaria`, `Transaccion`).
-*   **`repository`**: Interfaces que extienden de `JpaRepository` para la interacción con la base de datos.
-*   **`service`**: Contiene la lógica de negocio de la aplicación.
+*Ajusta esta estructura para que coincida con la de tu proyecto.*
 
 ## Ejecución de Pruebas
 
-Para ejecutar las pruebas unitarias e de integración incluidas en el proyecto, utiliza el siguiente comando Maven:
-
+Si tienes pruebas configuradas (ej. con Jest, Mocha):
 ```bash
-mvn test
+npm test
 ```
+*(Si no tienes pruebas, puedes omitir esta sección o indicar "Pruebas aún no implementadas")*
 
 ## Contribuciones
 
 Las contribuciones son bienvenidas. Si deseas contribuir:
-
-1.  Haz un Fork del proyecto.
-2.  Crea una nueva rama (`git checkout -b feature/nueva-funcionalidad`).
-3.  Realiza tus cambios y haz commit (`git commit -am 'Agrega nueva funcionalidad'`).
-4.  Haz push a la rama (`git push origin feature/nueva-funcionalidad`).
-5.  Abre un Pull Request.
-
-Por favor, asegúrate de que tus cambios pasen las pruebas existentes y, si es aplicable, añade nuevas pruebas.
+1. Haz un Fork del proyecto.
+2. Crea una nueva rama (`git checkout -b feature/nueva-funcionalidad`).
+3. Realiza tus cambios y haz commit (`git commit -am 'Agrega nueva funcionalidad'`).
+4. Haz push a la rama (`git push origin feature/nueva-funcionalidad`).
+5. Abre un Pull Request.
 

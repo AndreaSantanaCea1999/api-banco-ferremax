@@ -1,52 +1,246 @@
+
+// src/controllers/catalogo.controller.js
 const inventarioService = require('../services/inventario.service');
-const axios = require('axios'); // Importar axios para verificar si el error es de red
 
+/**
+ * Obtiene productos del catálogo (desde la API de Inventario)
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
 exports.obtenerProductos = async (req, res) => {
-    try {
-        // req.query contendrá todos los parámetros de consulta pasados en la URL
-        // ej: si la URL es /productos?marca=Bosch&sort=precio_asc, req.query será { marca: 'Bosch', sort: 'precio_asc' }
-        const productos = await inventarioService.listarProductosDeInventario(req.query);
-        res.json(productos);
-    } catch (error) {
-        console.error("Error en catalogoController.obtenerProductos:", error);  // Loggear el error completo
-        let statusCode = 500;
-        let errorResponse = {
-            error: "Error al obtener productos del catálogo.", // Mensaje por defecto
-            detalle: error.message // Detalle por defecto
-        };
-
-        if (axios.isAxiosError(error) && error.response) {
-            statusCode = error.response.status;
-            // Usar el mensaje de error de la API externa si está disponible, o uno más genérico si no.
-            errorResponse.error = error.response.data?.error || error.response.data?.message || `Error ${statusCode} al contactar el servicio de inventario.`;
-            // El objeto 'data' de la respuesta de error puede contener más detalles.
-            errorResponse.detalle = error.response.data || error.message;
-        }
-        res.status(statusCode).json(errorResponse);
+  try {
+    // Pasar todos los query params a la API de Inventario
+    const queryParams = req.query;
+    
+    // Obtener productos desde el servicio de inventario
+    const productos = await inventarioService.listarProductosDeInventario(queryParams);
+    
+    // Verificar si se obtuvieron productos
+    if (!productos || productos.length === 0) {
+      return res.status(200).json({
+        total: 0,
+        data: []
+      });
     }
+    
+    // Formatear la respuesta
+    res.status(200).json({
+      total: productos.data ? productos.data.length : productos.length,
+      data: productos.data || productos
+    });
+  } catch (error) {
+    console.error('Error al obtener productos del catálogo:', error);
+    
+    let statusCode = 500;
+    let errorMessage = 'Error al obtener productos del catálogo';
+    
+    // Si es un error de conexión con la API de Inventario
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      statusCode = 503;
+      errorMessage = 'La API de Inventario no está disponible en este momento';
+    }
+    
+    // Si el error viene de la API de Inventario con un status específico
+    if (error.response && error.response.status) {
+      statusCode = error.response.status;
+      errorMessage = error.response.data?.error || errorMessage;
+    }
+    
+    res.status(statusCode).json({
+      error: errorMessage,
+      message: error.message
+    });
+  }
 };
 
+/**
+ * Obtiene un producto específico por su ID
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
 exports.obtenerProductoPorId = async (req, res) => {
-    const productoId = req.params.id; // Definir productoId aquí para usarlo en el log de error
-    try {
-        const producto = await inventarioService.obtenerProductoDeInventario(productoId);
-        if (!producto) {
-            return res.status(404).json({ error: "Producto no encontrado en el catálogo." });
-        }
-        res.json(producto);
-    } catch (error) {
-        console.error(`Error en catalogoController.obtenerProductoPorId (${productoId}):`, error); // Loggear el error completo
-        let statusCode = 500;
-        let errorResponse = {
-            error: "Error al obtener el producto del catálogo.", // Mensaje por defecto
-            detalle: error.message // Detalle por defecto
-        };
-
-        if (axios.isAxiosError(error) && error.response) {
-            statusCode = error.response.status;
-            errorResponse.error = error.response.data?.error || error.response.data?.message || `Error ${statusCode} al contactar el servicio de inventario para el producto ${productoId}.`;
-            errorResponse.detalle = error.response.data || error.message;
-        }
-        res.status(statusCode).json(errorResponse);
+  try {
+    const { id } = req.params;
+    
+    // Llamar al servicio de inventario
+    const producto = await inventarioService.obtenerProductoDeInventario(id);
+    
+    // Verificar si se encontró el producto
+    if (!producto) {
+      return res.status(404).json({
+        error: 'Producto no encontrado',
+        message: `No se encontró un producto con el ID ${id}`
+      });
     }
+    
+    // Devolver el producto
+    res.status(200).json(producto);
+  } catch (error) {
+    console.error(`Error al obtener producto ${req.params.id}:`, error);
+    
+    let statusCode = 500;
+    let errorMessage = `Error al obtener producto con ID ${req.params.id}`;
+    
+    // Si es un error de conexión con la API de Inventario
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      statusCode = 503;
+      errorMessage = 'La API de Inventario no está disponible en este momento';
+    }
+    
+    // Si el error viene de la API de Inventario con un status específico
+    if (error.response && error.response.status) {
+      statusCode = error.response.status;
+      errorMessage = error.response.data?.error || errorMessage;
+    }
+    
+    res.status(statusCode).json({
+      error: errorMessage,
+      message: error.message
+    });
+  }
 };
+
+/**
+ * Obtiene productos por categoría
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerProductosPorCategoria = async (req, res) => {
+  try {
+    const { categoriaId } = req.params;
+    
+    // Construir los parámetros de consulta
+    const queryParams = {
+      ...req.query,
+      ID_Categoria: categoriaId
+    };
+    
+    // Llamar al servicio de inventario
+    const productos = await inventarioService.listarProductosDeInventario(queryParams);
+    
+    // Formatear la respuesta
+    res.status(200).json({
+      total: productos.data ? productos.data.length : productos.length,
+      categoriaId,
+      data: productos.data || productos
+    });
+  } catch (error) {
+    console.error(`Error al obtener productos por categoría ${req.params.categoriaId}:`, error);
+    
+    let statusCode = 500;
+    let errorMessage = `Error al obtener productos de la categoría ${req.params.categoriaId}`;
+    
+    // Manejar errores específicos
+    if (error.response && error.response.status) {
+      statusCode = error.response.status;
+      errorMessage = error.response.data?.error || errorMessage;
+    }
+    
+    res.status(statusCode).json({
+      error: errorMessage,
+      message: error.message
+    });
+  }
+};
+
+/**
+ * Obtiene productos por marca
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerProductosPorMarca = async (req, res) => {
+  try {
+    const { marcaId } = req.params;
+    
+    // Construir los parámetros de consulta
+    const queryParams = {
+      ...req.query,
+      ID_Marca: marcaId
+    };
+    
+    // Llamar al servicio de inventario
+    const productos = await inventarioService.listarProductosDeInventario(queryParams);
+    
+    // Formatear la respuesta
+    res.status(200).json({
+      total: productos.data ? productos.data.length : productos.length,
+      marcaId,
+      data: productos.data || productos
+    });
+  } catch (error) {
+    console.error(`Error al obtener productos por marca ${req.params.marcaId}:`, error);
+    
+    let statusCode = 500;
+    let errorMessage = `Error al obtener productos de la marca ${req.params.marcaId}`;
+    
+    // Manejar errores específicos
+    if (error.response && error.response.status) {
+      statusCode = error.response.status;
+      errorMessage = error.response.data?.error || errorMessage;
+    }
+    
+    res.status(statusCode).json({
+      error: errorMessage,
+      message: error.message
+    });
+  }
+};
+
+/**
+ * Busca productos según términos de búsqueda
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.buscarProductos = async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    if (!q || q.trim() === '') {
+      return res.status(400).json({
+        error: 'Parámetro de búsqueda inválido',
+        message: 'Se requiere un término de búsqueda (q)'
+      });
+    }
+    
+    // Construir los parámetros de consulta
+    const queryParams = {
+      ...req.query,
+      search: q
+    };
+    
+    // Llamar al servicio de inventario
+    const productos = await inventarioService.listarProductosDeInventario(queryParams);
+    
+    // Formatear la respuesta
+    res.status(200).json({
+      total: productos.data ? productos.data.length : productos.length,
+      termino: q,
+      data: productos.data || productos
+    });
+  } catch (error) {
+    console.error(`Error en búsqueda de productos con término "${req.query.q}":`, error);
+    
+    let statusCode = 500;
+    let errorMessage = 'Error al buscar productos';
+    
+    // Manejar errores específicos
+    if (error.response && error.response.status) {
+      statusCode = error.response.status;
+      errorMessage = error.response.data?.error || errorMessage;
+    }
+    
+    res.status(statusCode).json({
+      error: errorMessage,
+      message: error.message
+    });
+  }
+};
+
+module.exports = {
+  obtenerProductos,
+  obtenerProductoPorId,
+  obtenerProductosPorCategoria,
+  obtenerProductosPorMarca,
+  buscarProductos
+};
+Claude

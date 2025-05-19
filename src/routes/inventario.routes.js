@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const inventarioController = require('../controllers/inventario.controller'); // Ajusta la ruta
+const inventarioController = require('../controllers/inventario.controller');
 
-// Endpoint para verificar stock
+// Rutas para verificación de stock
 router.get('/stock', inventarioController.verificarStock);
 
-// Endpoint para actualizar un registro de inventario por su ID
+// Rutas para actualización de inventario (integración con API de inventario)
 router.patch('/:id', inventarioController.actualizarInventario);
 
 module.exports = router;

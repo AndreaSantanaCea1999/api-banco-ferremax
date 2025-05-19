@@ -1,13 +1,17 @@
-console.log('Cargando rutas de divisas...');
-
+// src/routes/divisas.routes.js
 const express = require('express');
 const router = express.Router();
-const divisasController = require('../controllers/divisas.controller'); // Asegúrate que la ruta al controlador sea correcta
+const divisasController = require('../controllers/divisas.controller');
 
-// Ruta para obtener la tasa del dólar
-router.get('/dolar', divisasController.obtenerTasaDolarActual); // Verifica que el método sea 'obtenerTasaDolarActual' o como lo hayas llamado
+// Rutas para obtención de tasas
+router.get('/dolar', divisasController.obtenerTasaDolarActual);
+router.get('/', divisasController.listarDivisas);
+router.get('/:codigo', divisasController.obtenerDivisaPorCodigo);
 
-// Ruta para convertir divisas
+// Rutas para conversión
 router.post('/convertir', divisasController.convertirMoneda);
+
+// Rutas de administración (deberían estar protegidas con autenticación)
+router.patch('/:codigo/tasa', divisasController.actualizarTasaDivisa);
 
 module.exports = router;

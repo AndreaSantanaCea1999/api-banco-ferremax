@@ -1,4 +1,5 @@
 const { Pedidos, DetallesPedido } = require('../models');
+const sequelize = require('../config/database');
 
 // Obtener todos los pedidos
 const getAllPedidos = async (req, res) => {

@@ -14,7 +14,13 @@ const Pedidos = sequelize.define('PEDIDOS', {
   },
   ID_Cliente: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: false,
+    references: {
+      model: 'CLIENTES',       // Asegúrate que coincida con el nombre real de la tabla
+      key: 'ID_Cliente'
+    },
+    onUpdate: 'CASCADE',
+    onDelete: 'RESTRICT'       // Evita eliminar un cliente si hay pedidos asociados
   },
   ID_Vendedor: {
     type: DataTypes.INTEGER,
@@ -109,6 +115,9 @@ const Pedidos = sequelize.define('PEDIDOS', {
       isIn: [['Baja', 'Normal', 'Alta', 'Urgente']]
     }
   }
+}, {
+  tableName: 'PEDIDOS',
+  timestamps: false
 });
 
 module.exports = Pedidos;

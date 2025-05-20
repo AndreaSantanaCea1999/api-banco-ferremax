@@ -1,4 +1,4 @@
-FERREMAX - API de Ventas y Pagos
+FERREMAX - API de Ventas y Pagoss
 Esta API forma parte del sistema integrado de FERREMAX, una distribuidora de productos de ferretería y construcción con múltiples sucursales en Chile y proyección internacional. La API de Ventas y Pagos gestiona pedidos, procesamiento de pagos con WebPay y conversión de divisas, integrándose con la API de Inventario.
 Contenido
 

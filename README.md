@@ -453,19 +453,6 @@ Para desplegar esta API en un entorno de producción, considera lo siguiente:
 7.  **Abre un Pull Request** hacia la rama `main` (o `develop`) del repositorio original.
 
 Por favor, asegúrate de que tu PR describa claramente los cambios realizados y por qué son necesarios.
-
----
-
-## 📞 Contacto y Soporte
-
-Si tienes preguntas, encuentras un error o necesitas soporte relacionado con esta API, puedes:
-
-*   📧 **Enviar un correo a:** `soporte-api@ferremas.cl`
-*   🐛 **Crear un Issue en GitHub:** [Enlace al sistema de Issues de tu repositorio]
-*   📚 **Consultar la Wiki del Proyecto:** [Enlace a la Wiki de tu repositorio] (si existe)
-
----
-
 ## 📄 Licencia
 
 Este proyecto está licenciado bajo los términos de la **Licencia MIT**.

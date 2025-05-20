@@ -1,17 +1,18 @@
 {
   "name": "api-banco-ferremax",
   "version": "1.0.0",
-  "description": "Segunda API para FERREMAS: Pedidos, Pagos y Servicios",
+  "description": "API para FERREMAS: Banco, Divisas, Pagos y Servicios",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "api",
     "ferremas",
-    "pedidos",
+    "banco",
+    "divisas",
     "pagos",
     "webpay",
     "bancocentral",
@@ -24,12 +25,25 @@
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
-    "express": "^4.19.2",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "mysql2": "^3.9.7",
-    "transbank-sdk": "^6.0.0"
+    "mysql2": "^3.14.1",
+    "sequelize": "^6.37.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "transbank-sdk": "^6.0.0",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
-  }
+    "nodemon": "^3.1.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndreaSantanaCea1999/api-banco-ferremax.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AndreaSantanaCea1999/api-banco-ferremax/issues"
+  },
+  "homepage": "https://github.com/AndreaSantanaCea1999/api-banco-ferremax#readme"
 }

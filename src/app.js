@@ -1,71 +1,76 @@
-// src/app.js
 const express = require('express');
 const cors = require('cors');
-const morgan = require('morgan'); // Para logging de peticiones HTTP
+const morgan = require('morgan');
+const dotenv = require('dotenv');
+const routes = require('./routes');
+const db = require('./models').sequelize;
 
-// Cargar variables de entorno
-require('dotenv').config();
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 
+// Carga variables de entorno
+dotenv.config();
+
+// Inicializa Express
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Middlewares importantes
-app.use(cors()); // Habilitar CORS para todas las rutas
-app.use(express.json()); // Para parsear application/json
-app.use(express.urlencoded({ extended: true })); // Para parsear application/x-www-form-urlencoded
-if (process.env.NODE_ENV !== 'production') {
-    app.use(morgan('dev')); // Logging de peticiones en desarrollo
-}
+// Configuración Swagger
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',  // Puedes usar '2.0' o '3.0.0', aquí te pongo OpenAPI 3
+    info: {
+      title: 'API de Ventas y Pagos FERREMAX',
+      description: 'API para gestionar pedidos, pagos y conversión de divisas',
+      version: '1.0.0',
+    },
+    servers: [
+      {
+        url: `http://localhost:${PORT}/api`,
+        description: 'Servidor local'
+      }
+    ]
+  },
+  apis: ['./src/routes/*.js'],  // Aquí defines dónde pones los comentarios para la doc
+};
 
-// Importar rutas
-const divisasRoutes = require('./routes/divisas.routes');
-const pedidosRoutes = require('./routes/pedidos.routes');
-const catalogoRoutes = require('./routes/catalogo.routes');
-const clientesRoutes = require('./routes/clientes.routes');
-const sucursalesRoutes = require('./routes/sucursales.routes');
-const inventarioRoutes = require('./routes/inventario.routes');
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
-// Definir la URL base para cada conjunto de rutas
-app.use('/api/divisas', divisasRoutes);
-app.use('/api/pedidos', pedidosRoutes);
-app.use('/api/catalogo', catalogoRoutes);
-app.use('/api/clientes', clientesRoutes);
-app.use('/api/sucursales', sucursalesRoutes);
-app.use('/api/inventario', inventarioRoutes);
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan('dev'));
 
-// Ruta de bienvenida
-app.get('/api', (req, res) => {
-    res.json({
-        mensaje: 'API de Banco FERREMAS funcionando correctamente',
-        version: '1.0.0',
-        endpoints: [
-            { ruta: '/api/divisas', descripcion: 'Gestión de divisas y conversiones' },
-            { ruta: '/api/pedidos', descripcion: 'Gestión de pedidos y pagos' },
-            { ruta: '/api/catalogo', descripcion: 'Consulta de productos' },
-            { ruta: '/api/clientes', descripcion: 'Gestión de clientes' },
-            { ruta: '/api/sucursales', descripcion: 'Gestión de sucursales' },
-            { ruta: '/api/inventario', descripcion: 'Consulta y gestión básica de inventario' }
-        ]
-    });
-});
+// Documentación Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// Middleware para manejar rutas no encontradas (404)
-app.use((req, res, next) => {
-    const error = new Error(`Ruta no encontrada: ${req.originalUrl}`);
-    error.status = 404;
-    next(error);
-});
+// Rutas API
+app.use('/api', routes);
 
-// Middleware para manejar errores globales
+// Error handler
 app.use((err, req, res, next) => {
-    console.error("Error global:", err.stack || err.message || err);
-    
-    // En desarrollo, incluir el stack de error
-    const errorDetails = process.env.NODE_ENV !== 'production' ? err.stack : undefined;
-    
-    res.status(err.status || 500).json({
-        error: err.message || 'Error interno del servidor',
-        detalles: errorDetails
-    });
+  console.error(err.stack);
+  res.status(500).json({
+    error: true,
+    message: process.env.NODE_ENV === 'production'
+      ? 'Ha ocurrido un error en el servidor'
+      : err.message
+  });
 });
+
+// Iniciar servidor después de conectar DB
+db.authenticate()
+  .then(() => {
+    console.log('Conexión a la base de datos establecida correctamente.');
+
+    app.listen(PORT, () => {
+      console.log(`API de Ventas y Pagos FERREMAX corriendo en el puerto ${PORT}`);
+      console.log(`Documentación Swagger disponible en http://localhost:${PORT}/api-docs`);
+    });
+  })
+  .catch(err => {
+    console.error('Error al conectar a la base de datos:', err);
+  });
 
 module.exports = app;

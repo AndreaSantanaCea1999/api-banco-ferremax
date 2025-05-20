@@ -1,152 +1,317 @@
-# API Banco Ferremax (Node.js & Express)
+FERREMAX - API de Ventas y Pagos
+Esta API forma parte del sistema integrado de FERREMAX, una distribuidora de productos de ferretería y construcción con múltiples sucursales en Chile y proyección internacional. La API de Ventas y Pagos gestiona pedidos, procesamiento de pagos con WebPay y conversión de divisas, integrándose con la API de Inventario.
+Contenido
 
-API RESTful para la gestión de operaciones bancarias y de divisas para "Banco Ferremax". Este proyecto está desarrollado con Node.js, Express y se conecta a una base de datos MySQL.
+Características Principales
+Tecnologías Utilizadas
+Estructura del Proyecto
+Servicios Integrados
+Instalación y Configuración
+Variables de Entorno
+Documentación de Endpoints
+Ejemplos de Uso
+Integración con API de Inventario
+Seguridad
+Pruebas
 
-## Tecnologías Utilizadas
+Características Principales
 
-*   **Entorno de ejecución:** Node.js (especificar versión, ej: v18.x o LTS)
-*   **Framework:** Express.js
-*   **Base de Datos:** MySQL
-*   **Gestor de Paquetes:** npm (o yarn, si lo usas)
-*   **(Opcional)** Otros paquetes importantes (ej: `mysql2`, `sequelize`, `dotenv`, `jsonwebtoken`, `cors`, etc. - *Ajusta según tu `package.json`*)
+Gestión de Pedidos: Creación, consulta y actualización de pedidos y sus detalles
+Procesamiento de Pagos: Integración completa con WebPay para pagos con tarjetas
+Conversión de Divisas: Conversión en tiempo real de precios a múltiples monedas
+Actualización de Inventario: Comunicación con API de Inventario para actualizar stock
+Simulación de Banco Central: Gestión de tipos de cambio entre diferentes divisas
 
-## Prerrequisitos
+Tecnologías Utilizadas
 
-*   Node.js (versión recomendada: LTS) instalado.
-*   npm (viene con Node.js) o yarn instalado.
-*   Servidor MySQL instalado y en ejecución.
-*   Un cliente API como Postman, Insomnia, o `curl` para probar los endpoints.
+Node.js: Entorno de ejecución
+Express.js: Framework para la API REST
+Sequelize ORM: Mapeo objeto-relacional para MySQL
+MySQL: Base de datos relacional
+Axios: Cliente HTTP para comunicación con APIs externas
+dotenv: Gestión de variables de entorno
 
-## Configuración del Entorno
+Estructura del Proyecto
+src/
+├── config/
+│   └── database.js         # Configuración de la conexión a la base de datos
+├── controllers/            # Lógica de negocio para cada ruta
+│   ├── detallesPedidoController.js
+│   ├── divisasController.js
+│   ├── pagosController.js
+│   ├── pedidosController.js
+│   ├── tiposCambioController.js
+│   └── webpayController.js
+├── models/                 # Definiciones de los modelos de Sequelize
+│   ├── detallesPedido.js
+│   ├── divisas.js
+│   ├── index.js            # Inicializa modelos y define relaciones
+│   ├── pagos.js
+│   ├── pedidos.js
+│   ├── tiposCambio.js
+│   └── webpayTransacciones.js
+├── routes/                 # Definiciones de las rutas de la API
+│   ├── detallesPedidoRoutes.js
+│   ├── divisasRoutes.js
+│   ├── index.js            # Enrutador principal
+│   ├── pagosRoutes.js
+│   ├── pedidosRoutes.js
+│   ├── tiposCambioRoutes.js
+│   └── webpayRoutes.js
+├── services/               # Servicios para comunicación con otras APIs
+│   ├── bancoCentralService.js  # Simulación de Banco Central
+│   ├── inventarioService.js    # Comunicación con API de Inventario
+│   └── webpayService.js        # Integración con WebPay
+└── app.js                  # Archivo principal de la aplicación Express
+Servicios Integrados
+WebPay
+La API se integra con WebPay para procesar pagos con tarjetas de débito y crédito. Implementa el ciclo completo:
 
-1.  **Crear la base de datos:**
-    Asegúrate de tener una base de datos MySQL creada para el proyecto (por ejemplo, `ferremax_db`).
-    *Nota: La consola indica "Conexión a MySQL (Pedidos DB) establecida correctamente (Pool)", así que podrías estar usando una base de datos llamada `Pedidos` o similar. Ajusta según sea necesario.*
+Inicio de transacción
+Procesamiento del pago
+Confirmación y verificación
 
-2.  **Variables de Entorno:**
-    Este proyecto utiliza variables de entorno para la configuración, especialmente para la conexión a la base de datos.
-    Crea un archivo `.env` en la raíz del proyecto a partir del archivo `.env.example` (si no existe, crea uno).
+Banco Central (Simulado)
+Implementa una simulación del servicio del Banco Central de Chile para:
 
-    **`.env.example` (Ejemplo):**
-    ```
-    PORT=3001
+Obtener tipos de cambio en tiempo real
+Convertir montos entre diferentes divisas
+Actualizar automáticamente tasas de cambio
 
-    DB_HOST=localhost
-    DB_USER=tu_usuario_mysql
-    DB_PASSWORD=tu_contraseña_mysql
-    DB_NAME=ferremax_db
-    DB_PORT=3306
+API de Inventario
+Se comunica con la API de Inventario para:
 
-    # Otras variables que puedas necesitar (ej: JWT_SECRET)
-    ```
+Verificar disponibilidad de stock antes de crear pedidos
+Actualizar niveles de inventario al aprobar o cancelar pedidos
 
-    **Crea tu archivo `.env` y llénalo con tus credenciales y configuraciones locales.**
+Instalación y Configuración
+Requisitos Previos
 
-## Instalación y Ejecución
+Node.js v14 o superior
+MySQL 5.7 o superior
+npm o yarn
 
-1.  **Clonar el repositorio:**
-    ```bash
-    git clone https://github.com/AndreaSantanaCea1999/api-banco-ferremax.git
-    cd api-banco-ferremax
-    ```
+Pasos de Instalación
+bash# Clonar repositorio
+git clone https://github.com/usuario/api-banco-ferremax.git
+cd api-banco-ferremax
 
-2.  **Instalar dependencias:**
-    ```bash
-    npm install
-    ```
-    (O si usas yarn: `yarn install`)
+# Instalar dependencias
+npm install
 
-3.  **Iniciar la aplicación:**
-    ```bash
-    npm start
-    ```
-    El servidor se iniciará y estará escuchando en `http://localhost:3001` (o el puerto que hayas configurado en tu archivo `.env`).
-    Deberías ver mensajes en la consola como:
-    ```
-    Cargando rutas de divisas...
-    Servidor API escuchando en el puerto 3001
-    Configuración de API del banco encontrada.
-    Conexión a MySQL (Pedidos DB) establecida correctamente (Pool).
-    ```
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con las credenciales necesarias
 
-## Endpoints de la API
+# Iniciar la API en modo desarrollo
+npm run dev
 
-La URL base para todos los endpoints es `http://localhost:3001/api` (o la ruta base que hayas configurado).
+# O iniciar en modo producción
+npm start
+Variables de Entorno
+Crea un archivo .env en la raíz del proyecto con las siguientes variables:
+# Base de datos
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=tu_contraseña
+DB_NAME=ferremax
 
-A continuación, se listan algunos endpoints posibles. **Deberás documentar los endpoints específicos de tu aplicación basándote en tu código (`src/routes/` o similar).**
+# API de Inventario
+API_INVENTARIO_URL=http://localhost:3000/api
 
-### Rutas de Divisas (`/api/divisas` - *ejemplo*)
+# WebPay (Desarrollo/Testing)
+WEBPAY_API_KEY=api_key_simulada
+WEBPAY_API_SECRET=api_secret_simulada
+WEBPAY_API_URL=https://webpay3g.transbank.cl
 
-*   **`GET /`**: Obtiene información sobre divisas.
-    *   *(Detalla qué información devuelve y si acepta parámetros query)*
-*   **`POST /convertir`**: Realiza una conversión de divisas.
-    *   **Request Body (ejemplo):**
-        ```json
-        {
-          "monedaOrigen": "USD",
-          "monedaDestino": "CLP",
-          "monto": 100
-        }
-        ```
+# Puerto
+PORT=3001
 
-### Clientes (`/api/clientes` - *ejemplo, si aplica*)
+# Entorno
+NODE_ENV=development
+Documentación de Endpoints
+Pedidos
+MétodoRutaDescripciónGET/api/pedidosObtener todos los pedidosGET/api/pedidos/:idObtener un pedido por IDPOST/api/pedidosCrear un nuevo pedidoPUT/api/pedidos/:idActualizar un pedidoPATCH/api/pedidos/:id/estadoActualizar estado de un pedido
+Detalles de Pedido
+MétodoRutaDescripciónGET/api/detalles-pedido/pedido/:pedidoIdObtener detalles de un pedidoPATCH/api/detalles-pedido/:id/estadoActualizar estado de un detalle
+Pagos
+MétodoRutaDescripciónGET/api/pagosObtener todos los pagosGET/api/pagos/pedido/:pedidoIdObtener pagos de un pedidoPOST/api/pagosRegistrar un nuevo pagoPATCH/api/pagos/:id/estadoActualizar estado de un pago
+WebPay
+MétodoRutaDescripciónPOST/api/webpay/iniciarIniciar transacción WebPayPOST/api/webpay/confirmarConfirmar transacción WebPayPOST/api/webpay/estado-transaccionVerificar estado de transacción
+Divisas
+MétodoRutaDescripciónGET/api/divisasObtener todas las divisasGET/api/divisas/:idObtener una divisa por IDPOST/api/divisasCrear una nueva divisaPUT/api/divisas/:idActualizar una divisaPATCH/api/divisas/:id/defaultEstablecer divisa predeterminada
+Tipos de Cambio
+MétodoRutaDescripciónGET/api/tipos-cambioObtener todos los tipos de cambioGET/api/tipos-cambio/consultaConsultar tipo de cambio específicoPOST/api/tipos-cambio/convertirConvertir monto entre divisasPOST/api/tipos-cambio/actualizarActualizar tasas de cambio
+Ejemplos de Uso
+Crear un Pedido
+Solicitud:
+bashcurl -X POST "http://localhost:3001/api/pedidos" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ID_Cliente": 1,
+    "ID_Vendedor": 1,
+    "ID_Sucursal": 1,
+    "Canal": "Online",
+    "Estado": "Pendiente",
+    "Metodo_Entrega": "Despacho_Domicilio",
+    "Direccion_Entrega": "Av. Providencia 1234",
+    "Ciudad_Entrega": "Santiago",
+    "Region_Entrega": "Metropolitana",
+    "Comentarios": "Pedido de prueba",
+    "Subtotal": 193970,
+    "Descuento": 5000,
+    "Impuestos": 36854,
+    "Costo_Envio": 5000,
+    "Total": 230824,
+    "ID_Divisa": 1,
+    "detalles": [
+      {
+        "ID_Producto": 1,
+        "Cantidad": 1,
+        "Precio_Unitario": 69990,
+        "Descuento": 0,
+        "Impuesto": 13298,
+        "Subtotal": 69990,
+        "Estado": "Pendiente"
+      },
+      {
+        "ID_Producto": 2,
+        "Cantidad": 1,
+        "Precio_Unitario": 110990,
+        "Descuento": 5000,
+        "Impuesto": 20088,
+        "Subtotal": 105990,
+        "Estado": "Pendiente"
+      }
+    ]
+  }'
+Respuesta:
+json{
+  "ID_Pedido": 22,
+  "Codigo_Pedido": "PD-20250520-4804",
+  "ID_Cliente": 1,
+  "ID_Vendedor": 1,
+  "ID_Sucursal": 1,
+  "Fecha_Pedido": "2025-05-20T05:38:47.246Z",
+  "Canal": "Online",
+  "Estado": "Pendiente",
+  "Metodo_Entrega": "Despacho_Domicilio",
+  "Direccion_Entrega": "Av. Providencia 1234",
+  "Ciudad_Entrega": "Santiago",
+  "Region_Entrega": "Metropolitana",
+  "Pais_Entrega": "Chile",
+  "Comentarios": "Pedido de prueba para integración",
+  "Subtotal": 193970,
+  "Descuento": 5000,
+  "Impuestos": 36854,
+  "Costo_Envio": 5000,
+  "Total": 230824,
+  "ID_Divisa": 1,
+  "Prioridad": "Normal"
+}
+Iniciar Transacción WebPay
+Solicitud:
+bashcurl -X POST "http://localhost:3001/api/webpay/iniciar" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idPedido": 22,
+    "monto": 230824,
+    "returnUrl": "http://localhost:3001/api/webpay/resultado",
+    "finalUrl": "http://localhost:3001"
+  }'
+Respuesta:
+json{
+  "token": "SIMU-1747719876686-406342",
+  "url": "https://webpay3g.transbank.cl/webpayserver/initTransaction?token_ws=SIMU-1747719876686-406342",
+  "idPago": 10
+}
+Convertir Montos entre Divisas
+Solicitud:
+bashcurl -X POST "http://localhost:3001/api/tipos-cambio/convertir" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "monto": 100000,
+    "origen": "CLP",
+    "destino": "USD"
+  }'
+Respuesta:
+json{
+  "montoOriginal": 100000,
+  "divisaOrigen": "CLP",
+  "montoConvertido": 110,
+  "divisaDestino": "USD",
+  "tasaCambio": 0.0011,
+  "fecha": "2025-05-20T05:45:12.678Z"
+}
+Integración con API de Inventario
+La API de Ventas y Pagos se comunica con la API de Inventario para varias funcionalidades clave:
+Verificación de Stock
+Al crear un pedido, la API verifica automáticamente la disponibilidad de stock para cada producto:
+javascript// En services/inventarioService.js
+const verificarStockProducto = async (idProducto, cantidad, idSucursal) => {
+  try {
+    const response = await axios.get(`${API_INVENTARIO_URL}/inventario/producto/${idProducto}/sucursal/${idSucursal}`);
+    
+    if (response.data && response.data.Stock_Actual >= cantidad) {
+      return { disponible: true, stock: response.data.Stock_Actual };
+    }
+    
+    return { disponible: false, stock: response.data ? response.data.Stock_Actual : 0 };
+  } catch (error) {
+    console.error('Error al verificar stock:', error.message);
+    throw new Error('No se pudo verificar el stock del producto');
+  }
+};
+Actualización de Inventario
+Al cambiar el estado de un pedido a "Aprobado", la API actualiza automáticamente el inventario:
+javascript// Actualizar inventario al confirmar un pedido
+const actualizarInventario = async (idProducto, cantidad, idSucursal, tipoMovimiento = 'Salida') => {
+  try {
+    const response = await axios.post(`${API_INVENTARIO_URL}/movimientos-inventario`, {
+      ID_Producto: idProducto,
+      ID_Sucursal: idSucursal,
+      Tipo_Movimiento: tipoMovimiento,
+      Cantidad: cantidad,
+      Comentario: `Movimiento generado por API Ventas - Pedido confirmado`
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar inventario:', error.message);
+    throw new Error('No se pudo actualizar el inventario');
+  }
+};
+Seguridad
+La API implementa las siguientes medidas de seguridad:
 
-*   **`GET /`**: Obtiene una lista de todos los clientes.
-*   **`POST /`**: Crea un nuevo cliente.
-    *   **Request Body (ejemplo):**
-        ```json
-        {
-          "nombre": "Juan",
-          "apellido": "Perez",
-          "rut": "11222333-4"
-        }
-        ```
+Validación de datos de entrada: Verificación rigurosa de todos los datos
+Manejo estructurado de errores: Mensajes de error informativos pero seguros
+CORS configurable: Control de dominios que pueden acceder a la API
+Variables de entorno: Configuración segura para credenciales sensibles
 
-### Cuentas (`/api/cuentas` - *ejemplo, si aplica*)
+Recomendaciones para Producción
 
-*   **`GET /cliente/{clienteId}`**: Obtiene las cuentas de un cliente.
-*   **`POST /`**: Crea una nueva cuenta.
+Implementar autenticación JWT para todas las rutas
+Utilizar HTTPS para toda la comunicación
+Configurar rate limiting para prevenir abusos
+Implementar logging detallado para auditoría
 
-### Transacciones (`/api/transacciones` - *ejemplo, si aplica*)
-
-*   **`POST /`**: Realiza una nueva transacción.
-
-*Por favor, revisa tu directorio de rutas (usualmente `src/routes/`) para listar y detallar todos los endpoints correctamente, incluyendo métodos HTTP, parámetros de ruta, query params y cuerpos de solicitud/respuesta esperados.*
-
-## Estructura del Proyecto (Ejemplo)
-
-```
-api-banco-ferremax/
-├── src/
-│   ├── controllers/  (Lógica de manejo de solicitudes)
-│   ├── routes/       (Definición de rutas de la API)
-│   ├── models/       (Modelos de datos, interacción con DB)
-│   ├── services/     (Lógica de negocio, opcional)
-│   ├── config/       (Configuración de DB, etc.)
-│   ├── middlewares/  (Middlewares personalizados)
-│   └── index.js      (Punto de entrada de la aplicación)
-├── .env              (Variables de entorno - NO SUBIR A GIT)
-├── .env.example      (Ejemplo de variables de entorno)
-├── package.json
-├── package-lock.json
-└── README.md         (Este archivo)
-```
-*Ajusta esta estructura para que coincida con la de tu proyecto.*
-
-## Ejecución de Pruebas
-
-Si tienes pruebas configuradas (ej. con Jest, Mocha):
-```bash
+Pruebas
+La API incluye pruebas unitarias y de integración:
+bash# Ejecutar pruebas
 npm test
-```
-*(Si no tienes pruebas, puedes omitir esta sección o indicar "Pruebas aún no implementadas")*
 
-## Contribuciones
+# Ejecutar pruebas con cobertura
+npm run test:coverage
+Además, se proporciona una colección de Postman para probar todos los endpoints:
+Descargar Colección Postman
 
-Las contribuciones son bienvenidas. Si deseas contribuir:
-1. Haz un Fork del proyecto.
-2. Crea una nueva rama (`git checkout -b feature/nueva-funcionalidad`).
-3. Realiza tus cambios y haz commit (`git commit -am 'Agrega nueva funcionalidad'`).
-4. Haz push a la rama (`git push origin feature/nueva-funcionalidad`).
-5. Abre un Pull Request.
+Contacto y Soporte
+Para preguntas o soporte, contacte al equipo de desarrollo:
 
+Email: soporte@ferremas.cl
+Issues: Usar el sistema de issues de GitHub
+Documentación adicional: Consultar la wiki del proyecto
+
+Licencia
+Este proyecto está licenciado bajo la Licencia MIT - ver el archivo LICENSE para más detalles.

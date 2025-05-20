@@ -1,7 +1,10 @@
+// src/controllers/pedidosController.js
+
 const { Pedidos, DetallesPedido } = require('../models');
 const sequelize = require('../config/database');
+const inventarioService = require('../services/inventarioService');
 
-// Obtener todos los pedidos
+// Obtener todos los pedidos con sus detalles
 const getAllPedidos = async (req, res) => {
   try {
     const pedidos = await Pedidos.findAll({
@@ -13,7 +16,7 @@ const getAllPedidos = async (req, res) => {
   }
 };
 
-// Obtener un pedido por ID
+// Obtener un pedido por ID con sus detalles
 const getPedidoById = async (req, res) => {
   try {
     const pedido = await Pedidos.findByPk(req.params.id, {
@@ -30,12 +33,33 @@ const getPedidoById = async (req, res) => {
   }
 };
 
-// Crear un nuevo pedido (con desactivación temporal de FOREIGN_KEY_CHECKS)
+// Crear un nuevo pedido con validación de stock y detalles
 const createPedido = async (req, res) => {
   try {
     await sequelize.query('SET FOREIGN_KEY_CHECKS=0;');
 
     const { detalles, ...pedidoData } = req.body;
+
+    if (detalles && detalles.length > 0) {
+      for (const detalle of detalles) {
+        try {
+          const stockDisponible = await inventarioService.verificarStockProducto(
+            detalle.ID_Producto,
+            detalle.Cantidad,
+            pedidoData.ID_Sucursal
+          );
+
+          if (!stockDisponible.disponible) {
+            return res.status(400).json({
+              error: `Stock insuficiente para el producto ID ${detalle.ID_Producto}. Disponible: ${stockDisponible.stock}`
+            });
+          }
+        } catch (error) {
+          console.error('Error al verificar stock:', error);
+          // Continuar si la API de inventario no está disponible
+        }
+      }
+    }
 
     const fecha = new Date();
     const codigoPedido = `PD-${fecha.getFullYear()}${(fecha.getMonth() + 1).toString().padStart(2, '0')}${fecha.getDate().toString().padStart(2, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
@@ -46,7 +70,6 @@ const createPedido = async (req, res) => {
     });
 
     if (detalles && detalles.length > 0) {
-      // Consultar el ID máximo actual de los detalles
       const [results] = await sequelize.query('SELECT MAX(ID_Detalle) as maxId FROM DETALLES_PEDIDO');
       let nextId = results[0].maxId ? parseInt(results[0].maxId) + 1 : 1;
 
@@ -62,7 +85,6 @@ const createPedido = async (req, res) => {
         Estado: detalle.Estado || 'Pendiente'
       }));
 
-      // Crear uno a uno para manejar errores individualmente
       for (const detalle of detallesConId) {
         try {
           await DetallesPedido.create(detalle, { validate: false });
@@ -73,37 +95,18 @@ const createPedido = async (req, res) => {
     }
 
     await sequelize.query('SET FOREIGN_KEY_CHECKS=1;');
-
-    const pedidoCompleto = await Pedidos.findByPk(pedido.ID_Pedido, {
-      include: [DetallesPedido]
-    });
-
-    res.status(201).json(pedidoCompleto);
+    res.status(201).json(pedido);
   } catch (error) {
     try {
       await sequelize.query('SET FOREIGN_KEY_CHECKS=1;');
     } catch (innerError) {
       console.error('Error al reactivar verificación FK:', innerError);
     }
-
-    console.error('Error completo:', JSON.stringify(error, null, 2));
-
-    if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({
-        error: 'Error de validación',
-        details: error.errors.map(e => ({
-          field: e.path,
-          message: e.message,
-          value: e.value
-        }))
-      });
-    }
-
     res.status(400).json({ error: error.message });
   }
 };
 
-// Actualizar un pedido existente
+// Actualizar campos permitidos de un pedido
 const updatePedido = async (req, res) => {
   try {
     const pedido = await Pedidos.findByPk(req.params.id);
@@ -113,9 +116,14 @@ const updatePedido = async (req, res) => {
     }
 
     const camposActualizables = [
-      'Estado', 'Metodo_Entrega', 'Direccion_Entrega',
-      'Ciudad_Entrega', 'Region_Entrega', 'Comentarios',
-      'Fecha_Estimada_Entrega', 'Prioridad'
+      'Estado',
+      'Metodo_Entrega',
+      'Direccion_Entrega',
+      'Ciudad_Entrega',
+      'Region_Entrega',
+      'Comentarios',
+      'Fecha_Estimada_Entrega',
+      'Prioridad'
     ];
 
     const actualizaciones = {};
@@ -137,7 +145,7 @@ const updatePedido = async (req, res) => {
   }
 };
 
-// Cambiar estado de un pedido
+// Cambiar el estado del pedido y actualizar inventario si aplica
 const cambiarEstadoPedido = async (req, res) => {
   try {
     const { estado } = req.body;
@@ -146,10 +154,46 @@ const cambiarEstadoPedido = async (req, res) => {
       return res.status(400).json({ message: 'Se requiere el campo estado' });
     }
 
-    const pedido = await Pedidos.findByPk(req.params.id);
+    const pedido = await Pedidos.findByPk(req.params.id, {
+      include: [DetallesPedido]
+    });
 
     if (!pedido) {
       return res.status(404).json({ message: 'Pedido no encontrado' });
+    }
+
+    if (estado === 'Aprobado' && pedido.Estado !== 'Aprobado') {
+      if (pedido.DetallesPedido && pedido.DetallesPedido.length > 0) {
+        for (const detalle of pedido.DetallesPedido) {
+          try {
+            await inventarioService.actualizarInventario(
+              detalle.ID_Producto,
+              detalle.Cantidad,
+              pedido.ID_Sucursal,
+              'Salida'
+            );
+          } catch (error) {
+            console.error(`Error al actualizar inventario para producto ${detalle.ID_Producto}:`, error);
+          }
+        }
+      }
+    }
+
+    if ((estado === 'Cancelado' || estado === 'Devuelto') && pedido.Estado === 'Aprobado') {
+      if (pedido.DetallesPedido && pedido.DetallesPedido.length > 0) {
+        for (const detalle of pedido.DetallesPedido) {
+          try {
+            await inventarioService.actualizarInventario(
+              detalle.ID_Producto,
+              detalle.Cantidad,
+              pedido.ID_Sucursal,
+              'Entrada'
+            );
+          } catch (error) {
+            console.error(`Error al reponer inventario para producto ${detalle.ID_Producto}:`, error);
+          }
+        }
+      }
     }
 
     await pedido.update({ Estado: estado });
@@ -160,6 +204,7 @@ const cambiarEstadoPedido = async (req, res) => {
   }
 };
 
+// Exportar funciones del controlador
 module.exports = {
   getAllPedidos,
   getPedidoById,

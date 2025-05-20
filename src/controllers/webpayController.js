@@ -1,7 +1,10 @@
+// src/controllers/webpayController.js
+// Asegúrate de que el archivo tenga estos contenidos completos
+
 const { WebpayTransacciones, Pagos } = require('../models');
 const webpayService = require('../services/webpayService');
 
-// Iniciar una transacción WebPay
+// Iniciar una transacción WebPay (función existente)
 const iniciarTransaccion = async (req, res) => {
   try {
     const { idPedido, monto, returnUrl, finalUrl } = req.body;
@@ -41,7 +44,7 @@ const iniciarTransaccion = async (req, res) => {
   }
 };
 
-// Confirmar resultado de transacción WebPay
+// Confirmar resultado de transacción WebPay (función existente)
 const confirmarTransaccion = async (req, res) => {
   try {
     const { token_ws } = req.body; // Token recibido desde WebPay
@@ -98,7 +101,41 @@ const confirmarTransaccion = async (req, res) => {
   }
 };
 
+// Verificar estado de transacción WebPay (nueva función)
+const verificarEstadoTransaccion = async (req, res) => {
+  try {
+    const { token_ws } = req.body;
+    
+    if (!token_ws) {
+      return res.status(400).json({ message: 'Token no proporcionado' });
+    }
+    
+    // Buscar la transacción en la base de datos
+    const transaccion = await WebpayTransacciones.findOne({
+      where: { Token_Webpay: token_ws },
+      include: [Pagos]
+    });
+    
+    if (!transaccion) {
+      return res.status(404).json({ message: 'Transacción no encontrada' });
+    }
+    
+    // Devolver el estado de la transacción
+    res.status(200).json({
+      estado: transaccion.Respuesta_Descripcion,
+      codigoRespuesta: transaccion.Respuesta_Codigo,
+      idPago: transaccion.ID_Pago,
+      idPedido: transaccion.Pagos ? transaccion.Pagos.ID_Pedido : null,
+      monto: transaccion.Pagos ? transaccion.Pagos.Monto : null
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Exportar todas las funciones
 module.exports = {
   iniciarTransaccion,
-  confirmarTransaccion
+  confirmarTransaccion,
+  verificarEstadoTransaccion
 };

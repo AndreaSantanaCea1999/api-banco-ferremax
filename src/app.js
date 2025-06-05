@@ -1,76 +1,62 @@
+// src/app.js (API Inventario)
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const dotenv = require('dotenv');
-const routes = require('./routes');
-const db = require('./models').sequelize;
+require('dotenv').config();
 
-const swaggerJsDoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
+// Importa tu configuración de Sequelize
+const { sequelize, testConnection } = require('./config/database');
 
-// Carga variables de entorno
-dotenv.config();
+// Importa tus modelos y rutas
+const {
+  Inventario,
+  Productos,
+  MovimientosInventario,
+  Usuario,
+  Pedidos,
+  DetallesPedido
+} = require('./models');
+const mainRoutes = require('./routes');
 
-// Inicializa Express
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración Swagger
-const swaggerOptions = {
-  swaggerDefinition: {
-    openapi: '3.0.0',  // Puedes usar '2.0' o '3.0.0', aquí te pongo OpenAPI 3
-    info: {
-      title: 'API de Ventas y Pagos FERREMAX',
-      description: 'API para gestionar pedidos, pagos y conversión de divisas',
-      version: '1.0.0',
-    },
-    servers: [
-      {
-        url: `http://localhost:${PORT}/api`,
-        description: 'Servidor local'
-      }
-    ]
-  },
-  apis: ['./src/routes/*.js'],  // Aquí defines dónde pones los comentarios para la doc
-};
-
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
-
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(morgan('dev'));
+app.use(morgan('combined'));
 
-// Documentación Swagger
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use('/api', mainRoutes);
 
-// Rutas API
-app.use('/api', routes);
+// Ejemplo de ruta adicional para borrar inventario por producto
+app.delete('/api/inventario/producto/:productoId', async (req, res) => { /* … */ });
 
-// Error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    error: true,
-    message: process.env.NODE_ENV === 'production'
-      ? 'Ha ocurrido un error en el servidor'
-      : err.message
+app.get('/', (req, res) => {
+  res.json({
+    message: 'API de Inventario y Ventas FERREMAS funcionando correctamente',
+    version: '1.0.0',
+    documentation: '/api',
+    status: 'active'
   });
 });
 
-// Iniciar servidor después de conectar DB
-db.authenticate()
-  .then(() => {
-    console.log('Conexión a la base de datos establecida correctamente.');
+app.use((error, req, res, next) => { /* manejador global de errores */ });
+app.use('*', (req, res) => { /* 404 handler */ });
 
-    app.listen(PORT, () => {
-      console.log(`API de Ventas y Pagos FERREMAX corriendo en el puerto ${PORT}`);
-      console.log(`Documentación Swagger disponible en http://localhost:${PORT}/api-docs`);
-    });
-  })
-  .catch(err => {
-    console.error('Error al conectar a la base de datos:', err);
-  });
+// Arranca el servidor y comprueba la conexión a la BD
+app.listen(PORT, async () => {
+  console.log(`🚀 API Inventario escuchando en http://localhost:${PORT}`);
+  
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Conexión a la base de datos establecida correctamente.');
+    // Si quieres sincronizar modelos solo en desarrollo:
+    if (process.env.NODE_ENV === 'development') {
+      await sequelize.sync({ alter: false });
+      console.log('🔄 Modelos sincronizados.');
+    }
+  } catch (error) {
+    console.error('❌ Error al conectar con la base de datos:', error);
+  }
+});
 
 module.exports = app;

@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const { sequelize } = require('../config/database');
 
 const WebpayTransacciones = sequelize.define('WEBPAY_TRANSACCIONES', {
   ID_Webpay_Transaccion: {

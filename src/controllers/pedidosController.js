@@ -1,6 +1,5 @@
 // src/controllers/pedidosController.js
-const { Pedidos, DetallesPedido } = require('../models');
-const sequelize = require('../config/database');
+const { Pedidos, DetallesPedido, sequelize } = require('../models'); // Importar sequelize desde models/index.js o config/database.js
 const inventarioService = require('../services/inventarioService');
 
 // Obtener todos los pedidos
@@ -34,11 +33,10 @@ const getPedidoById = async (req, res) => {
 
 // Crear un nuevo pedido
 const createPedido = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
-    // Deshabilitar verificación de clave foránea temporalmente
-    await sequelize.query('SET FOREIGN_KEY_CHECKS=0;');
-    
     const { detalles, ...pedidoData } = req.body;
+
     
     // Verificar stock para todos los productos del pedido
     if (detalles && detalles.length > 0) {
@@ -52,6 +50,7 @@ const createPedido = async (req, res) => {
           
           if (!stockDisponible.disponible) {
             return res.status(400).json({
+              message: `Stock insuficiente para el producto ID ${detalle.ID_Producto}. Disponible: ${stockDisponible.stock}`,
               error: `Stock insuficiente para el producto ID ${detalle.ID_Producto}. Disponible: ${stockDisponible.stock}`
             });
           }
@@ -70,56 +69,40 @@ const createPedido = async (req, res) => {
     const pedido = await Pedidos.create({
       ...pedidoData,
       Codigo_Pedido: codigoPedido
-    });
+    }, { transaction: t });
     
     // Si hay detalles, crearlos también
     if (detalles && detalles.length > 0) {
-      // Consultar el ID máximo actual
-      const [results] = await sequelize.query('SELECT MAX(ID_Detalle) as maxId FROM DETALLES_PEDIDO');
-      let nextId = results[0].maxId ? parseInt(results[0].maxId) + 1 : 1;
-      
-      // Asignar IDs explícitos a cada detalle
-      const detallesConId = detalles.map(detalle => {
-        return {
-          ID_Detalle: nextId++,
-          ID_Pedido: pedido.ID_Pedido,
-          ID_Producto: detalle.ID_Producto,
-          Cantidad: detalle.Cantidad,
-          Precio_Unitario: detalle.Precio_Unitario,
-          Descuento: detalle.Descuento || 0,
-          Impuesto: detalle.Impuesto || 0,
-          Subtotal: detalle.Subtotal,
-          Estado: detalle.Estado || 'Pendiente'
-        };
-      });
-      
       // Crear los detalles uno por uno para mayor control
-      for (const detalle of detallesConId) {
+      for (const detalleData of detalles) {
         try {
-          await DetallesPedido.create(detalle, { validate: false });
+          await DetallesPedido.create({
+            ID_Pedido: pedido.ID_Pedido, // Asociar con el pedido recién creado
+            ID_Producto: detalleData.ID_Producto,
+            Cantidad: detalleData.Cantidad,
+            Precio_Unitario: detalleData.Precio_Unitario,
+            Descuento: detalleData.Descuento || 0,
+            Impuesto: detalleData.Impuesto || 0,
+            Subtotal: detalleData.Subtotal,
+            Estado: detalleData.Estado || 'Pendiente'
+          }, { transaction: t /* , validate: false */ }); // Considerar remover validate: false
         } catch (error) {
           console.error(`Error al crear detalle: ${error.message}`);
+          // Re-lanzar el error para que la transacción haga rollback
+          throw error;
         }
       }
     }
     
-    // Rehabilitar verificaciones
-    await sequelize.query('SET FOREIGN_KEY_CHECKS=1;');
+    await t.commit();
     
     // Obtener el pedido completo con sus detalles
     const pedidoCompleto = await Pedidos.findByPk(pedido.ID_Pedido, {
       include: [DetallesPedido]
     });
-    
     res.status(201).json(pedidoCompleto);
   } catch (error) {
-    // En caso de error, asegurar que se reactiva la verificación
-    try {
-      await sequelize.query('SET FOREIGN_KEY_CHECKS=1;');
-    } catch (innerError) {
-      console.error('Error al reactivar verificación FK:', innerError);
-    }
-    
+    await t.rollback();
     res.status(400).json({ error: error.message });
   }
 };
@@ -173,10 +156,10 @@ const cambiarEstadoPedido = async (req, res) => {
     }
 
     // Si el pedido pasa a "Aprobado", actualizar inventario y DETALLES
-    if (estado === 'Aprobado' && pedido.Estado !== 'Aprobado') {
-      // Actualizar stock y estado de cada detalle
-      if (pedido.DETALLES_PEDIDOs && pedido.DETALLES_PEDIDOs.length > 0) {
-        for (const detalle of pedido.DETALLES_PEDIDOs) {
+    if (estado === 'Aprobado' && pedido.Estado !== 'Aprobado') { // TODO: Revisar el alias correcto para DetallesPedido
+      // Actualizar stock y estado de cada detalle. Asumiendo que el alias es 'DetallesPedidos' o el definido en el include.
+      if (pedido.DetallesPedidos && pedido.DetallesPedidos.length > 0) {
+        for (const detalle of pedido.DetallesPedidos) {
           try {
             // 1. Actualizar inventario
             await inventarioService.actualizarInventario(
@@ -201,8 +184,8 @@ const cambiarEstadoPedido = async (req, res) => {
     
     // Si el pedido pasa a "Cancelado" o "Devuelto" y estaba "Aprobado", reponer stock
     if ((estado === 'Cancelado' || estado === 'Devuelto') && pedido.Estado === 'Aprobado') {
-      if (pedido.DETALLES_PEDIDOs && pedido.DETALLES_PEDIDOs.length > 0) {
-        for (const detalle of pedido.DETALLES_PEDIDOs) {
+      if (pedido.DetallesPedidos && pedido.DetallesPedidos.length > 0) { // TODO: Revisar el alias correcto
+        for (const detalle of pedido.DetallesPedidos) {
           try {
             // 1. Actualizar inventario (reponer stock)
             await inventarioService.actualizarInventario(

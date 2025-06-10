@@ -14,13 +14,18 @@ async function verificarConexion() {
   console.log(`   API Puerto: ${process.env.PORT || 3000}\n`);
   
   try {
+    const dbPassword = process.env.DB_PASSWORD;
+    if (!dbPassword) {
+      console.error('❌ Error: La variable de entorno DB_PASSWORD no está definida en el archivo .env.');
+      process.exit(1);
+    }
     // Crear conexión
     const connection = await mysql.createConnection({
       host: process.env.DB_HOST || 'localhost',
       port: process.env.DB_PORT || 3306,
       user: process.env.DB_USER || 'administrador',
-      password: process.env.DB_PASSWORD || 'yR!9uL2@pX',
-      database: process.env.DB_NAME || 'ferremas_complete'
+      password: dbPassword,
+      database: process.env.DB_NAME || 'ferremas_complete',
     });
     
     console.log('✅ Conexión exitosa!\n');
@@ -32,8 +37,8 @@ async function verificarConexion() {
     
     // Verificar tablas críticas
     const tablasRequeridas = [
-      'usuario', 'cliente', 'productos', 'inventario', 
-      'pedidos', 'detalles_pedido', 'divisas', 'tipos_cambio',
+      'usuario', 'cliente', 'sucursales', 'productos', 
+      'inventario', 'pedidos', 'detalles_pedido', 'divisas', 'tipos_cambio',
       'pagos', 'webpay_transacciones'
     ];
     
@@ -82,6 +87,7 @@ async function verificarConexion() {
     
     await connection.end();
     console.log('\n✅ Verificación completada!');
+    process.exit(0);
     
   } catch (error) {
     console.error('\n❌ Error de conexión:', error.message);
@@ -90,6 +96,7 @@ async function verificarConexion() {
     console.error('2. Verifica las credenciales en el archivo .env');
     console.error('3. Asegúrate que la base de datos "ferremas_complete" existe');
     console.error('4. Verifica que el usuario tiene permisos sobre la base de datos');
+    process.exit(1);
   }
 }
 

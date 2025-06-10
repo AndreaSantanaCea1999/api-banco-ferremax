@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
-const TiposCambio = sequelize.define('TIPOS_CAMBIO', {
+const TiposCambio = sequelize.define('tipos_cambio', {
   ID_Tipo_Cambio: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -27,6 +27,9 @@ const TiposCambio = sequelize.define('TIPOS_CAMBIO', {
     type: DataTypes.STRING(100),
     defaultValue: 'Banco Central de Chile'
   }
+}, {
+  tableName: 'tipos_cambio',
+  timestamps: false
 });
 
 module.exports = TiposCambio;

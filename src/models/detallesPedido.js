@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
-const DetallesPedido = sequelize.define('DETALLES_PEDIDO', {
+const DetallesPedido = sequelize.define('detalles_pedido', {
   ID_Detalle: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -43,6 +43,9 @@ const DetallesPedido = sequelize.define('DETALLES_PEDIDO', {
       isIn: [['Pendiente', 'Preparado', 'Entregado', 'Devuelto']]
     }
   }
+}, {
+  tableName: 'detalles_pedido',
+  timestamps: false
 });
 
 module.exports = DetallesPedido;

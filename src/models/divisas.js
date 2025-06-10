@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
-const Divisas = sequelize.define('DIVISAS', {
+const Divisas = sequelize.define('divisas', {
   ID_Divisa: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -24,6 +24,9 @@ const Divisas = sequelize.define('DIVISAS', {
     type: DataTypes.INTEGER,
     defaultValue: 0
   }
+}, {
+  tableName: 'divisas',
+  timestamps: false
 });
 
 module.exports = Divisas;

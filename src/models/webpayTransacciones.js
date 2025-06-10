@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
-const WebpayTransacciones = sequelize.define('WEBPAY_TRANSACCIONES', {
+const WebpayTransacciones = sequelize.define('webpay_transacciones', {
   ID_Webpay_Transaccion: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -52,6 +52,9 @@ const WebpayTransacciones = sequelize.define('WEBPAY_TRANSACCIONES', {
     type: DataTypes.TEXT,
     allowNull: true
   }
+}, {
+  tableName: 'webpay_transacciones',
+  timestamps: false
 });
 
 module.exports = WebpayTransacciones;

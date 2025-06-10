@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
-const Pagos = sequelize.define('PAGOS', {
+const Pagos = sequelize.define('pagos', {
   ID_Pago: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -60,6 +60,9 @@ const Pagos = sequelize.define('PAGOS', {
     type: DataTypes.STRING(500),
     allowNull: true
   }
+}, {
+  tableName: 'pagos',
+  timestamps: false
 });
 
 module.exports = Pagos;

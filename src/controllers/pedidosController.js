@@ -140,86 +140,88 @@ const updatePedido = async (req, res) => {
 
 // Cambiar estado de un pedido
 const cambiarEstadoPedido = async (req, res) => {
+  const t = await sequelize.transaction(); // Iniciar transacción
   try {
     const { estado } = req.body;
-    
+
     if (!estado) {
+      await t.rollback();
       return res.status(400).json({ message: 'Se requiere el campo estado' });
     }
-    
+
     const pedido = await Pedidos.findByPk(req.params.id, {
-      include: [DetallesPedido]
+      include: [DetallesPedido],
+      transaction: t
     });
-    
+
     if (!pedido) {
+      await t.rollback();
       return res.status(404).json({ message: 'Pedido no encontrado' });
     }
 
     // Si el pedido pasa a "Aprobado", actualizar inventario y DETALLES
-    if (estado === 'Aprobado' && pedido.Estado !== 'Aprobado') { // TODO: Revisar el alias correcto para DetallesPedido
-      // Actualizar stock y estado de cada detalle. Asumiendo que el alias es 'DetallesPedidos' o el definido en el include.
+    if (estado === 'Aprobado' && pedido.Estado !== 'Aprobado') {
+      // Asumiendo que la asociación es Pedidos.hasMany(DetallesPedido) -> pedido.DetallesPedidos
       if (pedido.DetallesPedidos && pedido.DetallesPedidos.length > 0) {
         for (const detalle of pedido.DetallesPedidos) {
-          try {
-            // 1. Actualizar inventario
-            await inventarioService.actualizarInventario(
-              detalle.ID_Producto,
-              detalle.Cantidad,
-              pedido.ID_Sucursal,
-              'Salida'
-            );
-            
-            // 2. Actualizar estado del detalle a "Preparado"
-            await DetallesPedido.update(
-              { Estado: 'Preparado' },
-              { where: { ID_Detalle: detalle.ID_Detalle } }
-            );
-          } catch (error) {
-            console.error(`Error al procesar detalle ${detalle.ID_Detalle}:`, error);
-            // Continuamos con el siguiente detalle si hay error en uno
-          }
+          // 1. Actualizar inventario
+          await inventarioService.actualizarInventario(
+            detalle.ID_Producto,
+            detalle.Cantidad,
+            pedido.ID_Sucursal,
+            'Salida'
+            // Considerar pasar { transaction: t } si el servicio de inventario lo soporta
+            // y si opera sobre la misma base de datos y puede participar en la transacción.
+            // Si es un microservicio externo, esta operación no será transaccional con la BD local.
+          );
+
+          // 2. Actualizar estado del detalle a "Preparado"
+          await DetallesPedido.update(
+            { Estado: 'Preparado' },
+            { where: { ID_Detalle: detalle.ID_Detalle }, transaction: t }
+          );
         }
       }
     }
-    
+
     // Si el pedido pasa a "Cancelado" o "Devuelto" y estaba "Aprobado", reponer stock
     if ((estado === 'Cancelado' || estado === 'Devuelto') && pedido.Estado === 'Aprobado') {
-      if (pedido.DetallesPedidos && pedido.DetallesPedidos.length > 0) { // TODO: Revisar el alias correcto
+      if (pedido.DetallesPedidos && pedido.DetallesPedidos.length > 0) {
         for (const detalle of pedido.DetallesPedidos) {
-          try {
-            // 1. Actualizar inventario (reponer stock)
-            await inventarioService.actualizarInventario(
-              detalle.ID_Producto,
-              detalle.Cantidad,
-              pedido.ID_Sucursal,
-              'Entrada'
-            );
-            
-            // 2. Actualizar estado del detalle
-            await DetallesPedido.update(
-              { Estado: estado === 'Cancelado' ? 'Cancelado' : 'Devuelto' },
-              { where: { ID_Detalle: detalle.ID_Detalle } }
-            );
-          } catch (error) {
-            console.error(`Error al procesar detalle ${detalle.ID_Detalle}:`, error);
-          }
+          // 1. Actualizar inventario (reponer stock)
+          await inventarioService.actualizarInventario(
+            detalle.ID_Producto,
+            detalle.Cantidad,
+            pedido.ID_Sucursal,
+            'Entrada'
+            // Considerar { transaction: t } como en el caso 'Aprobado'
+          );
+
+          // 2. Actualizar estado del detalle
+          await DetallesPedido.update(
+            { Estado: estado === 'Cancelado' ? 'Cancelado' : 'Devuelto' },
+            { where: { ID_Detalle: detalle.ID_Detalle }, transaction: t }
+          );
         }
       }
     }
-    
+
     // Actualizar estado del pedido principal
-    await pedido.update({ Estado: estado });
-    
+    await pedido.update({ Estado: estado }, { transaction: t });
+
+    await t.commit(); // Confirmar transacción si todo fue exitoso
+
     // Obtener pedido actualizado con detalles actualizados
     const pedidoActualizado = await Pedidos.findByPk(req.params.id, {
       include: [DetallesPedido]
     });
-    
-    res.status(200).json({ 
-      message: `Estado del pedido actualizado a ${estado}`, 
-      pedido: pedidoActualizado 
+
+    res.status(200).json({
+      message: `Estado del pedido actualizado a ${estado}`,
+      pedido: pedidoActualizado
     });
   } catch (error) {
+    await t.rollback(); // Revertir transacción en caso de error
     res.status(400).json({ error: error.message });
   }
 };

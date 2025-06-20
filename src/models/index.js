@@ -5,6 +5,7 @@ const Pagos = require('./pagos');
 const WebpayTransacciones = require('./webpayTransacciones');
 const Divisas = require('./divisas');
 const TiposCambio = require('./tiposCambio');
+const Usuario = require('./Usuario'); // ✅ AÑADIDO
 
 // Definir relaciones
 Pedidos.hasMany(DetallesPedido, { foreignKey: 'ID_Pedido' });
@@ -28,6 +29,7 @@ const models = {
   WebpayTransacciones,
   Divisas,
   TiposCambio,
+  Usuario, // ✅ AGREGADO
   sequelize
 };
 

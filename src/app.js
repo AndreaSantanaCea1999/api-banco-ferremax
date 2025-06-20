@@ -7,7 +7,7 @@ require('dotenv').config();
 // Importa tu configuración de Sequelize
 const { sequelize, testConnection } = require('./config/database');
 
-// Importa tus modelos y rutas   
+// Importa tus modelos
 const {
   Inventario,
   Productos,
@@ -16,10 +16,11 @@ const {
   Pedidos,
   DetallesPedido
 } = require('./models');
-const mainRoutes = require('./routes');
 
-// 👉 Importar nueva ruta de divisas
-const divisasRoutes = require('./routes/divisasRoutes');
+// Importa rutas
+const mainRoutes = require('./routes');
+const divisasRoutes = require('./routes/divisasRoutes');  // 👉 Ruta de divisas
+const authRoutes = require('./routes/authRoutes');        // 👉 Ruta de autenticación
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,8 +32,11 @@ app.use(morgan('combined'));
 // 👉 Rutas principales
 app.use('/api', mainRoutes);
 
-// 👉 Agrega aquí la ruta de divisas
+// 👉 Ruta de divisas
 app.use('/api/v1/divisas', divisasRoutes);
+
+// 👉 Ruta de autenticación
+app.use('/api/v1/auth', authRoutes);
 
 // Ejemplo de ruta adicional para borrar inventario por producto
 app.delete('/api/inventario/producto/:productoId', async (req, res) => {

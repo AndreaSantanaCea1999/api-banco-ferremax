@@ -7,7 +7,7 @@ require('dotenv').config();
 // Importa tu configuración de Sequelize
 const { sequelize, testConnection } = require('./config/database');
 
-// Importa tus modelos y rutas
+// Importa tus modelos y rutas   
 const {
   Inventario,
   Productos,
@@ -18,6 +18,9 @@ const {
 } = require('./models');
 const mainRoutes = require('./routes');
 
+// 👉 Importar nueva ruta de divisas
+const divisasRoutes = require('./routes/divisasRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -25,10 +28,16 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('combined'));
 
+// 👉 Rutas principales
 app.use('/api', mainRoutes);
 
+// 👉 Agrega aquí la ruta de divisas
+app.use('/api/v1/divisas', divisasRoutes);
+
 // Ejemplo de ruta adicional para borrar inventario por producto
-app.delete('/api/inventario/producto/:productoId', async (req, res) => { /* … */ });
+app.delete('/api/inventario/producto/:productoId', async (req, res) => {
+  // Aquí irá tu lógica para borrar inventario por producto
+});
 
 app.get('/', (req, res) => {
   res.json({
@@ -39,17 +48,25 @@ app.get('/', (req, res) => {
   });
 });
 
-app.use((error, req, res, next) => { /* manejador global de errores */ });
-app.use('*', (req, res) => { /* 404 handler */ });
+// Manejador de errores global
+app.use((error, req, res, next) => {
+  console.error(error.stack);
+  res.status(500).json({ error: 'Error interno del servidor' });
+});
 
-// Arranca el servidor y comprueba la conexión a la BD
+// Manejador para rutas no encontradas
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Ruta no encontrada' });
+});
+
+// Arranca el servidor y verifica conexión a la BD
 app.listen(PORT, async () => {
   console.log(`🚀 API Inventario escuchando en http://localhost:${PORT}`);
-  
+
   try {
     await sequelize.authenticate();
     console.log('✅ Conexión a la base de datos establecida correctamente.');
-    // Si quieres sincronizar modelos solo en desarrollo:
+
     if (process.env.NODE_ENV === 'development') {
       await sequelize.sync({ alter: false });
       console.log('🔄 Modelos sincronizados.');

@@ -54,8 +54,11 @@ app.post('/api/v1/convertir', async (req, res) => {
       monedaOrigen,
       montoConvertido: parseFloat(montoFinal.toFixed(2)),
       monedaDestino,
-      tasaUtilizada: parseFloat((tasaOrigen.Tasa_Cambio / tasaDestino.Tasa_Cambio).toFixed(6)),
-      fechaTasa: tasaOrigen.Fecha || tasaDestino.Fecha,
+      detalleTasas: {
+        tasaCruzada: parseFloat((tasaOrigen.Tasa_Cambio / tasaDestino.Tasa_Cambio).toFixed(6)),
+        origenVsCLP: { tasa: tasaOrigen.Tasa_Cambio, fecha: tasaOrigen.Fecha },
+        destinoVsCLP: { tasa: tasaDestino.Tasa_Cambio, fecha: tasaDestino.Fecha }
+      }
     });
   } catch (error) {
     console.error("Error en la conversión de divisas:", error);
@@ -96,11 +99,18 @@ app.get('/api/v1/indicadores', async (req, res) => {
  * @returns {Promise<TiposCambio|null>} El objeto del tipo de cambio o null si no se encuentra.
  */
 async function getLatestExchangeRate(codigoMonedaOrigen, codigoMonedaDestino) {
-  const divisaOrigen = await Divisas.findOne({ where: { Codigo: codigoMonedaOrigen } });
-  const divisaDestino = await Divisas.findOne({ where: { Codigo: codigoMonedaDestino } });
+  // Optimización: Buscar ambas divisas en una sola consulta a la BD.
+  const divisas = await Divisas.findAll({
+    where: {
+      Codigo: [codigoMonedaOrigen, codigoMonedaDestino]
+    }
+  });
+
+  const divisaOrigen = divisas.find(d => d.Codigo === codigoMonedaOrigen);
+  const divisaDestino = divisas.find(d => d.Codigo === codigoMonedaDestino);
 
   if (!divisaOrigen || !divisaDestino) {
-    throw new Error(`Una o ambas divisas no se encontraron en la BD: ${codigoMonedaOrigen}, ${codigoMonedaDestino}`);
+    throw new Error(`Una o ambas divisas no fueron encontradas en la BD: ${codigoMonedaOrigen}, ${codigoMonedaDestino}`);
   }
 
   return TiposCambio.findOne({
@@ -149,9 +159,15 @@ async function obtenerValorDesdeAPI(endpoint, monedaKey) {
 }
 
 async function guardarActualizarTipoCambioEnDB(valor, fechaApi, codigoMonedaOrigen = 'USD', codigoMonedaDestino = 'CLP') {
-  try {
-    const divisaOrigen = await Divisas.findOne({ where: { Codigo: codigoMonedaOrigen } });
-    const divisaDestino = await Divisas.findOne({ where: { Codigo: codigoMonedaDestino } });
+  try {    
+    const divisas = await Divisas.findAll({
+      where: {
+        Codigo: [codigoMonedaOrigen, codigoMonedaDestino]
+      }
+    });
+
+    const divisaOrigen = divisas.find(d => d.Codigo === codigoMonedaOrigen);
+    const divisaDestino = divisas.find(d => d.Codigo === codigoMonedaDestino);
 
     if (!divisaOrigen || !divisaDestino) {
       const errorMessage = `Error: Divisa ${codigoMonedaOrigen} o ${codigoMonedaDestino} no encontrada en la base de datos.`;
@@ -285,7 +301,7 @@ app.post('/api/tipo-cambio/manual', async (req, res) => {
 
 app.get('/api/divisas', async (req, res) => {
   try {
-    const divisas = await Divisas.findAll();
+    const divisas = await Divisas.findAll({ order: [['Nombre', 'ASC']] });
     res.json(divisas);
   } catch (error) {
     console.error("Error al obtener divisas:", error);
@@ -293,33 +309,30 @@ app.get('/api/divisas', async (req, res) => {
   }
 });
 
-app.get('/api/tipo-cambio/dolar-actual', async (req, res) => {
-  try {
-    const ultimoTipoCambio = await getLatestExchangeRate('USD', 'CLP');
-    if (ultimoTipoCambio) {
-      res.json(ultimoTipoCambio);
-    } else {
-      res.status(404).json({ message: "No hay tipos de cambio USD/CLP registrados en la base de datos." });
+/**
+ * Crea un manejador de ruta para obtener la tasa de cambio más reciente de una divisa contra CLP.
+ * @param {string} currencyCode - El código de la divisa (ej. 'USD').
+ * @param {string} currencyName - El nombre legible de la divisa (ej. 'Dólar').
+ * @returns {Function} Un manejador de ruta async para Express.
+ */
+function createGetLatestRateHandler(currencyCode, currencyName) {
+  return async (req, res) => {
+    try {
+      const ultimoTipoCambio = await getLatestExchangeRate(currencyCode, 'CLP');
+      if (ultimoTipoCambio) {
+        res.json(ultimoTipoCambio);
+      } else {
+        res.status(404).json({ message: `No hay tipos de cambio ${currencyCode}/CLP registrados en la base de datos.` });
+      }
+    } catch (error) {
+      console.error(`Error al obtener el último tipo de cambio ${currencyCode}/CLP:`, error);
+      res.status(500).json({ message: `Error al obtener el último tipo de cambio de ${currencyName}.`, error: error.message });
     }
-  } catch (error) {
-    console.error("Error al obtener el último tipo de cambio USD/CLP:", error);
-    res.status(500).json({ message: "Error al obtener el último tipo de cambio USD/CLP.", error: error.message });
-  }
-});
+  };
+}
 
-app.get('/api/tipo-cambio/euro-actual', async (req, res) => {
-  try {
-    const ultimoTipoCambio = await getLatestExchangeRate('EUR', 'CLP');
-    if (ultimoTipoCambio) {
-      res.json(ultimoTipoCambio);
-    } else {
-      res.status(404).json({ message: "No hay tipos de cambio EUR/CLP registrados en la base de datos." });
-    }
-  } catch (error) {
-    console.error("Error al obtener el último tipo de cambio EUR/CLP:", error);
-    res.status(500).json({ message: "Error al obtener el último tipo de cambio EUR/CLP.", error: error.message });
-  }
-});
+app.get('/api/tipo-cambio/dolar-actual', createGetLatestRateHandler('USD', 'Dólar'));
+app.get('/api/tipo-cambio/euro-actual', createGetLatestRateHandler('EUR', 'Euro'));
 
 async function iniciarServidor() {
   try {

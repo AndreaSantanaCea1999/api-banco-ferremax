@@ -1,5 +1,5 @@
 // src/config/database.js (para ambas APIs)
-const { Sequelize } = require('sequelize');
+const { Sequelize } = require('sequelize'); 
 require('dotenv').config();
 
 // Verificar que las variables de entorno están cargadas

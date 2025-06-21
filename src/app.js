@@ -1,83 +1,40 @@
-// src/app.js (API Inventario)
+// c:\Users\andre\Proyecto Ferremax\api-ventas-pagos\api-banco-ferremax\src\app.js
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 require('dotenv').config();
 
-// Importa tu configuración de Sequelize
-const { sequelize, testConnection } = require('./config/database');
-
-// Importa tus modelos
-const {
-  Inventario,
-  Productos,
-  MovimientosInventario,
-  Usuario,
-  Pedidos,
-  DetallesPedido
-} = require('./models');
-
-// Importa rutas
-const mainRoutes = require('./routes');
-const divisasRoutes = require('./routes/divisasRoutes');  // 👉 Ruta de divisas
-const authRoutes = require('./routes/authRoutes');        // 👉 Ruta de autenticación
+// Importa tus rutas
+const healthRoutes = require('./routes/healthRoutes');
+// const pagosRoutes = require('./routes/pagosRoutes'); // Descomenta cuando las necesites
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
-app.use(morgan('combined'));
+app.use(morgan('dev')); // 'dev' es más informativo para desarrollo
 
-// 👉 Rutas principales
-app.use('/api', mainRoutes);
+// Rutas de la API
+app.use('/health', healthRoutes);
+// app.use('/api/v1/pagos', pagosRoutes);
 
-// 👉 Ruta de divisas
-app.use('/api/v1/divisas', divisasRoutes);
-
-// 👉 Ruta de autenticación
-app.use('/api/v1/auth', authRoutes);
-
-// Ejemplo de ruta adicional para borrar inventario por producto
-app.delete('/api/inventario/producto/:productoId', async (req, res) => {
-  // Aquí irá tu lógica para borrar inventario por producto
-});
-
+// Ruta de bienvenida
 app.get('/', (req, res) => {
-  res.json({
-    message: 'API de Inventario y Ventas FERREMAS funcionando correctamente',
-    version: '1.0.0',
-    documentation: '/api',
-    status: 'active'
-  });
+  res.send('¡Bienvenido a la API de FERREMAX - Banco!');
 });
 
-// Manejador de errores global
-app.use((error, req, res, next) => {
-  console.error(error.stack);
-  res.status(500).json({ error: 'Error interno del servidor' });
-});
-
-// Manejador para rutas no encontradas
-app.use('*', (req, res) => {
+// Manejador para rutas no encontradas (404)
+// Importante: Debe ir después de todas tus rutas válidas.
+app.use((req, res, next) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
 });
 
-// Arranca el servidor y verifica conexión a la BD
-app.listen(PORT, async () => {
-  console.log(`🚀 API Inventario escuchando en http://localhost:${PORT}`);
-
-  try {
-    await sequelize.authenticate();
-    console.log('✅ Conexión a la base de datos establecida correctamente.');
-
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: false });
-      console.log('🔄 Modelos sincronizados.');
-    }
-  } catch (error) {
-    console.error('❌ Error al conectar con la base de datos:', error);
-  }
+// Manejador de errores global
+// Importante: Debe ser el último middleware.
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Algo salió mal en el servidor' });
 });
 
 module.exports = app;

@@ -1,23 +1,31 @@
-// Cargar variables de entorno de forma robusta desde la raíz del proyecto
+// c:\Users\andre\Proyecto Ferremax\api-ventas-pagos\api-banco-ferremax\src\index.js
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-const app = require('./app'); // Importar la configuración de la app desde app.js
+const app = require('./app');
+const { sequelize } = require('./config/database');
 
-// Una ruta de bienvenida simple para probar que el servidor funciona
-app.get('/', (req, res) => {
-  res.send('¡Bienvenido a la API de FERREMAS - Banco!');
-});
+const PORT = process.env.PORT || 3001;
 
-// Los manejadores de errores 404 y globales más detallados se encuentran en app.js
-const PORT = process.env.PORT || 3000; // Usa el puerto de la variable de entorno o 3000 por defecto
+const startServer = async () => {
+  try {
+    console.log('🚀 Iniciando API Banco...');
+    
+    await sequelize.authenticate();
+    console.log('✅ Conexión a la base de datos establecida correctamente.');
 
-app.listen(PORT, () => {
-  console.log(`Servidor API escuchando en el puerto ${PORT}`);
-  // Verificar si las variables de entorno para la API del banco están cargadas
-  if (!process.env.BANCO_API_URL || !process.env.BANCO_API_KEY) {
-    console.warn('ADVERTENCIA: BANCO_API_URL o BANCO_API_KEY no están configuradas. La funcionalidad de divisas podría fallar.');
-  } else {
-    console.log('Configuración de API del banco encontrada.');
+    if (process.env.NODE_ENV === 'development') {
+      await sequelize.sync({ alter: false });
+      console.log('🔄 Modelos sincronizados.');
+    }
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor API Banco escuchando en el puerto ${PORT}`);
+    });
+  } catch (error) {
+    console.error('❌ Error al iniciar el servidor:', error);
+    process.exit(1); // Termina el proceso si no se puede iniciar
   }
-});
+};
+
+startServer();

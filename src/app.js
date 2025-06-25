@@ -6,6 +6,8 @@ require('dotenv').config();
 
 // Importa tus rutas
 const healthRoutes = require('./routes/healthRoutes');
+const divisasRoutes = require('./routes/divisasRoutes');
+
 // const pagosRoutes = require('./routes/pagosRoutes'); // Descomenta cuando las necesites
 
 const app = express();
@@ -17,6 +19,8 @@ app.use(morgan('dev')); // 'dev' es más informativo para desarrollo
 
 // Rutas de la API
 app.use('/health', healthRoutes);
+app.use('/api/divisas', divisasRoutes);
+
 // app.use('/api/v1/pagos', pagosRoutes);
 
 // Ruta de bienvenida

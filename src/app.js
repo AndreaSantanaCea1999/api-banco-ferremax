@@ -1,4 +1,4 @@
-// src/app.js - Versión mejorada con todas las funcionalidades requeridas
+// src/app.js - Versión final corregida con todas las funcionalidades
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -12,7 +12,7 @@ const app = express();
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://ferremas.cl', 'https://www.ferremas.cl'] 
-    : ['http://localhost:3000', 'http://localhost:3001'],
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3004'],
   credentials: true
 }));
 
@@ -31,6 +31,9 @@ const webpayRoutes = require('./routes/webpayRoutes');
 const divisasRoutes = require('./routes/divisasRoutes');
 const tiposCambioRoutes = require('./routes/tiposCambioRoutes');
 const healthRoutes = require('./routes/healthRoutes');
+const ventasRoutes = require('./routes/ventasRoutes');
+const clienteRoutes = require('./routes/clienteRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Middleware de autenticación
 const { verificarToken, verificarRol } = require('./middlewares/auth');
@@ -48,6 +51,9 @@ app.use('/api/v1/divisas', divisasRoutes);
 app.use('/api/v1/pedidos', verificarToken, pedidosRoutes);
 app.use('/api/v1/detalles-pedido', verificarToken, detallesPedidoRoutes);
 app.use('/api/v1/pagos', verificarToken, pagosRoutes);
+app.use('/api/v1/ventas', verificarToken, ventasRoutes);
+app.use('/api/v1/cliente', verificarToken, clienteRoutes);
+app.use('/api/v1/admin', verificarToken, verificarRol(['administrador']), adminRoutes);
 app.use('/api/v1/webpay', webpayRoutes); // WebPay maneja su propia autenticación
 app.use('/api/v1/tipos-cambio', tiposCambioRoutes);
 
@@ -62,7 +68,10 @@ app.get('/', (req, res) => {
     description: 'API para gestión de pedidos, pagos y conversión de divisas',
     endpoints: {
       auth: '/api/v1/auth - Autenticación y registro',
+      cliente: '/api/v1/cliente - Funcionalidades específicas de clientes',
+      admin: '/api/v1/admin - Panel administrativo y reportes',
       pedidos: '/api/v1/pedidos - Gestión de pedidos',
+      ventas: '/api/v1/ventas - Proceso completo de ventas',
       pagos: '/api/v1/pagos - Gestión de pagos',
       webpay: '/api/v1/webpay - Integración WebPay',
       divisas: '/api/v1/divisas - Información de divisas',
@@ -72,6 +81,13 @@ app.get('/', (req, res) => {
       inventario: process.env.API_INVENTARIO_URL,
       banco_central: 'Banco Central de Chile',
       webpay: 'Transbank WebPay'
+    },
+    roles_sistema: {
+      cliente: 'Compras y gestión de pedidos',
+      vendedor: 'Aprobación de pedidos',
+      bodeguero: 'Preparación y entrega',
+      contador: 'Confirmación de pagos',
+      administrador: 'Informes y gestión'
     },
     documentacion: '/api/v1/docs'
   });
@@ -86,6 +102,17 @@ app.use((req, res, next) => {
     message: 'Endpoint no encontrado',
     path: req.path,
     method: req.method,
+    endpoint_disponibles: [
+      '/health',
+      '/api/v1/auth',
+      '/api/v1/divisas',
+      '/api/v1/pedidos',
+      '/api/v1/ventas',
+      '/api/v1/cliente',
+      '/api/v1/admin',
+      '/api/v1/pagos',
+      '/api/v1/webpay'
+    ],
     timestamp: new Date().toISOString()
   });
 });
@@ -104,4 +131,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+// ===========================================
+// EXPORTAR APP
+// ===========================================
 module.exports = app;

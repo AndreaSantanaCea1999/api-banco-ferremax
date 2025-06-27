@@ -6,7 +6,7 @@ async function obtenerTiposCambio(req, res) {
   try {
     console.log('💱 [obtenerTiposCambio] Consultando tipos de cambio...');
     
-    const tiposCambio = await bancoCentralService.obtenerTiposCambio();
+   const tiposCambio = await bancoCentralService.obtenerTodosTiposCambio();
     
     return res.status(200).json({
       success: true,

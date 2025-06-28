@@ -1,15 +1,14 @@
 {
   "name": "api-banco-ferremax",
   "version": "1.0.0",
-    "description": "API para gestionar pagos y transacciones bancarias de Ferremax",
-
+  "description": "API para gestionar pagos y transacciones bancarias de Ferremax",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
-    },
-   "keywords": [
+  },
+  "keywords": [
     "api",
     "banco",
     "pagos",
@@ -18,14 +17,14 @@
     "sequelize"
   ],
   "author": "Tu Nombre o Equipo",
-   "license": "ISC",
+  "license": "ISC",
   "dependencies": {
     "axios": "^1.10.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
+    "dotenv": "^16.6.1",
     "dotenv-expand": "^12.0.2",
-    "express": "^4.19.2",
+    "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "mysql2": "^3.14.1",

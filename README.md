@@ -1,465 +1,714 @@
-<p align="center">
-  <!-- Opcional: Logo del Proyecto -->
-  <!-- <img src="ruta/a/tu/logo.png" alt="FERREMAX Logo" width="200"/> -->
-  <h1 align="center">FERREMAX - API de Ventas y Pagos</h1>
-</p>
+# 🏦 API Banco FERREMAX
 
-<p align="center">
-  <!-- Badges: Estado del build, cobertura, licencia, etc. -->
-  <img src="https://img.shields.io/badge/Node.js-18.x-green.svg" alt="Node.js version">
-  <img src="https://img.shields.io/badge/Express.js-4.x-blue.svg" alt="Express.js version">
-  <img src="https://img.shields.io/badge/MySQL-8.x-orange.svg" alt="MySQL version">
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License MIT">
-  <!-- Añade más badges según sea necesario -->
-  <!-- Ejemplo: [!Build Status](https://travis-ci.org/usuario/api-banco-ferremax) -->
-</p>
+<div align="center">
 
-Esta API es el motor transaccional del sistema integrado de **FERREMAX**, una destacada distribuidora de productos de ferretería y construcción con una sólida presencia en Chile y planes de expansión internacional. La API de Ventas y Pagos se encarga de la gestión integral de pedidos, el procesamiento seguro de pagos a través de **WebPay (Transbank)**, la conversión dinámica de divisas y la sincronización con la **API de Inventario**.
+![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)
+![Express.js](https://img.shields.io/badge/Express.js-4.x-blue.svg)
+![MySQL](https://img.shields.io/badge/MySQL-8.x-orange.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Version](https://img.shields.io/badge/Version-1.0.0-purple.svg)
 
----
+**API de Ventas y Pagos para el sistema integrado FERREMAX**
 
-## 📜 Tabla de Contenidos
+[Características](#-características-principales) •
+[Instalación](#-instalación-rápida) •
+[Documentación](#-documentación-de-la-api) •
+[Ejemplos](#-ejemplos-de-uso) •
+[Contribuir](#-contribuir)
 
-1.  ✨ Características Principales
-2.  🛠️ Tecnologías Utilizadas
-3.  📁 Estructura del Proyecto
-4.  🔗 Servicios Integrados
-5.  🚀 Instalación y Configuración
-6.  🔑 Variables de Entorno
-7.  📖 Documentación de Endpoints
-8.  💡 Ejemplos de Uso
-9.  📦 Integración con API de Inventario
-10. 🛡️ Seguridad
-11. 🧪 Pruebas
-12. ☁️ Despliegue (Consideraciones)
-13. 🤝 Contribuciones
-14. 📞 Contacto y Soporte
-15. 📄 Licencia
+</div>
 
 ---
+
+## 📖 Descripción
+
+La **API Banco FERREMAX** es el motor transaccional del sistema integrado de FERREMAX, una distribuidora líder de productos de ferretería y construcción en Chile. Esta API maneja el ciclo completo de ventas, desde la creación de pedidos hasta el procesamiento de pagos con integración a WebPay (Transbank) y conversión automática de divisas.
 
 ## ✨ Características Principales
 
-*   **🛍️ Gestión Avanzada de Pedidos:** Creación, consulta detallada, actualización de estados y gestión completa del ciclo de vida de los pedidos.
-*   **💳 Procesamiento de Pagos Seguro con WebPay:** Integración robusta con la plataforma WebPay de Transbank para pagos con tarjetas de débito y crédito, cumpliendo con los estándares de seguridad.
-*   **💱 Conversión Dinámica de Divisas:** Funcionalidad para la conversión en tiempo real de precios y montos a múltiples monedas, facilitando operaciones internacionales.
-*   **🔄 Sincronización de Inventario en Tiempo Real:** Comunicación bidireccional con la API de Inventario para verificar disponibilidad y actualizar el stock de productos automáticamente.
-*   **🏦 Simulación de Tasas de Cambio (Banco Central):** Módulo para gestionar y simular la obtención de tipos de cambio, permitiendo flexibilidad en entornos de prueba y desarrollo.
+### 🛍️ **Gestión Completa de Ventas**
+- Creación y seguimiento de pedidos en tiempo real
+- Gestión de estados de pedidos (Pendiente → Aprobado → En Preparación → Entregado)
+- Cálculo automático de impuestos, descuentos y costos de envío
+- Soporte para múltiples métodos de entrega
 
----
+### 💳 **Procesamiento de Pagos Seguro**
+- **WebPay (Transbank)**: Integración completa con tarjetas de débito y crédito
+- **Pagos manuales**: Soporte para efectivo y transferencias
+- **Seguridad PCI**: Cumplimiento con estándares de seguridad financiera
+- **Confirmación automática**: Validación y confirmación de transacciones
+
+### 💱 **Conversión de Divisas en Tiempo Real**
+- Integración con Banco Central de Chile
+- Soporte para CLP, USD, EUR, ARS, BRL
+- Cache inteligente para optimizar consultas
+- Simulación para entornos de desarrollo
+
+### 🔄 **Integración con Microservicios**
+- **API de Inventario**: Verificación y actualización automática de stock
+- **Sistema de Notificaciones**: Alertas en tiempo real
+- **Sincronización bidireccional**: Consistencia de datos garantizada
+
+### 🛡️ **Seguridad y Autenticación**
+- **JWT**: Tokens seguros con expiración configurable
+- **Bcrypt**: Hasheo seguro de contraseñas (factor 12)
+- **Roles y permisos**: Sistema granular de autorización
+- **Rate limiting**: Protección contra abuso
 
 ## 🛠️ Tecnologías Utilizadas
 
-| Tecnología        | Descripción                                       |
-|-------------------|---------------------------------------------------|
-| **Node.js**       | Entorno de ejecución JavaScript del lado del servidor. |
-| **Express.js**    | Framework web para la creación de APIs REST.        |
-| **Sequelize ORM** | Mapeo objeto-relacional para MySQL.               |
-| **MySQL**         | Sistema de gestión de bases deatos relacional.    |
-| **Axios**         | Cliente HTTP para comunicación con APIs externas.  |
-| **dotenv**        | Gestión de variables de entorno.                  |
-| **jsonwebtoken**  | Generación y verificación de JSON Web Tokens (JWT). |
-| **bcryptjs**      | Hashing seguro de contraseñas.                    |
-| **Transbank SDK** | SDK oficial para la integración con WebPay.       |
-| **Morgan**        | Middleware para logging de solicitudes HTTP.      |
-| **Nodemon**       | Monitoriza cambios y reinicia el servidor en desarrollo. |
+| Categoría | Tecnología | Versión | Propósito |
+|-----------|------------|---------|-----------|
+| **Runtime** | Node.js | 18.x | Entorno de ejecución |
+| **Framework** | Express.js | 4.x | API REST |
+| **Base de Datos** | MySQL | 8.x | Almacenamiento principal |
+| **ORM** | Sequelize | 6.x | Mapeo objeto-relacional |
+| **Autenticación** | JWT + Bcrypt | Latest | Seguridad |
+| **Pagos** | Transbank SDK | 6.x | Procesamiento WebPay |
+| **HTTP Client** | Axios | 1.x | Comunicación con APIs |
+| **Logging** | Morgan | 1.x | Registro de solicitudes |
+| **Dev Tools** | Nodemon | 3.x | Desarrollo en vivo |
 
----
+## 🚀 Instalación Rápida
+
+### ✅ Prerrequisitos
+
+```bash
+# Verificar versiones mínimas
+node --version    # v18.0.0+
+npm --version     # v8.0.0+
+mysql --version   # v8.0.0+
+```
+
+### 📥 Clonación e Instalación
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/tu-usuario/api-banco-ferremax.git
+cd api-banco-ferremax
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Configurar variables de entorno
+cp .env.example .env
+# Edita .env con tus configuraciones
+
+# 4. Configurar base de datos
+# Ejecutar script SQL para crear tablas y datos iniciales
+mysql -u administrador -p ferremas_complete < scripts/setup-database.sql
+
+# 5. Verificar configuración
+npm run verify
+
+# 6. Iniciar en modo desarrollo
+npm run dev
+```
+
+### 🗄️ Configuración de Base de Datos
+
+```sql
+-- Crear base de datos
+CREATE DATABASE ferremas_complete CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Configurar usuario (opcional)
+CREATE USER 'administrador'@'localhost' IDENTIFIED BY 'tu_password_segura';
+GRANT ALL PRIVILEGES ON ferremas_complete.* TO 'administrador'@'localhost';
+FLUSH PRIVILEGES;
+```
 
 ## 📁 Estructura del Proyecto
 
 ```
 api-banco-ferremax/
-├── src/
-│   ├── config/               # Configuraciones (BD, variables de entorno)
-│   │   ├── database.js       # Configuración de Sequelize y conexión a BD
-│   │   └── index.js          # Carga de variables de entorno (dotenv)
-│   ├── controllers/          # Lógica de negocio para cada ruta (request/response)
-│   ├── middlewares/          # Middlewares personalizados (ej. autenticación, validación)
-│   ├── models/               # Definiciones de los modelos de Sequelize y sus relaciones
-│   ├── routes/               # Definiciones de las rutas de la API y enrutador principal
-│   ├── services/             # Lógica de negocio desacoplada, comunicación con APIs externas
-│   ├── utils/                # Funciones de utilidad reutilizables
-│   ├── app.js                # Configuración principal de la aplicación Express
-│   └── index.js              # Punto de entrada del servidor (inicia la app)
-├── tests/                    # Pruebas (unitarias, integración, E2E)
-│   ├── unit/
-│   └── integration/
-├── .env.example              # Archivo de ejemplo para variables de entorno
-├── .gitignore                # Archivos y carpetas ignorados por Git
-├── package.json              # Metadatos del proyecto y dependencias
-├── package-lock.json         # Versiones exactas de las dependencias
-├── README.md                 # Este archivo
-└── (Otros archivos de configuración: .eslintrc.json, .prettierrc.json, etc.)
+├── 📁 src/
+│   ├── 📁 config/              # Configuraciones
+│   │   ├── database.js         # Conexión MySQL/Sequelize
+│   │   └── index.js           # Variables de entorno
+│   ├── 📁 controllers/         # Lógica de negocio
+│   │   ├── authController.js   # Autenticación JWT
+│   │   ├── pedidosController.js # Gestión de pedidos
+│   │   ├── pagosController.js  # Procesamiento de pagos
+│   │   ├── webpayController.js # Integración WebPay
+│   │   ├── ventasController.js # Flujo completo de ventas
+│   │   ├── divisasController.js # Conversión de divisas
+│   │   ├── clienteController.js # Panel de cliente
+│   │   └── adminController.js  # Panel administrativo
+│   ├── 📁 models/              # Modelos de datos
+│   │   ├── index.js           # Configuración Sequelize
+│   │   ├── Usuario.js         # Modelo de usuarios
+│   │   ├── pedidos.js         # Modelo de pedidos
+│   │   ├── pagos.js           # Modelo de pagos
+│   │   ├── webpayTransacciones.js # Transacciones WebPay
+│   │   └── divisas.js         # Modelo de divisas
+│   ├── 📁 routes/              # Definición de rutas
+│   │   ├── authRoutes.js      # Rutas de autenticación
+│   │   ├── pedidosRoutes.js   # Rutas de pedidos
+│   │   ├── pagosRoutes.js     # Rutas de pagos
+│   │   ├── webpayRoutes.js    # Rutas WebPay
+│   │   ├── ventasRoutes.js    # Rutas de ventas
+│   │   ├── divisasRoutes.js   # Rutas de divisas
+│   │   ├── clienteRoutes.js   # Rutas de cliente
+│   │   └── adminRoutes.js     # Rutas administrativas
+│   ├── 📁 services/            # Servicios externos
+│   │   ├── webpayService.js   # Comunicación WebPay
+│   │   ├── inventarioService.js # API de Inventario
+│   │   └── bancoCentralService.js # Banco Central
+│   ├── 📁 middlewares/         # Middlewares personalizados
+│   │   └── auth.js            # Verificación JWT
+│   ├── 📁 utils/               # Utilidades
+│   ├── app.js                  # Configuración Express
+│   └── index.js               # Punto de entrada
+├── 📁 tests/                   # Pruebas
+├── 📁 scripts/                 # Scripts utilitarios
+├── 📁 docs/                    # Documentación
+├── .env.example               # Variables de entorno ejemplo
+├── package.json               # Dependencias y scripts
+└── README.md                  # Este archivo
 ```
-
----
-
-## 🔗 Servicios Integrados
-
-### 💳 WebPay (Transbank)
-Integración completa con la pasarela de pagos WebPay para procesar transacciones con tarjetas de débito y crédito de forma segura.
-*   **Flujo de Pago:** Inicio de transacción, redirección a WebPay, procesamiento del pago por el cliente, y confirmación/verificación en la API.
-*   **Seguridad:** Utiliza el SDK oficial de Transbank, asegurando el cumplimiento de los protocolos de seguridad.
-
-### 🏦 Banco Central (Simulado)
-Módulo que simula la interacción con los servicios del Banco Central de Chile para:
-*   Obtención de tipos de cambio actualizados (simulados).
-*   Conversión de montos entre CLP y otras divisas relevantes.
-*   Flexibilidad para actualizar tasas manualmente para pruebas.
-
-### 📦 API de Inventario
-Comunicación esencial con el sistema de gestión de inventario para:
-*   **Consulta de Stock:** Verificar la disponibilidad de productos en tiempo real antes de confirmar pedidos.
-*   **Actualización de Stock:** Descontar unidades vendidas y reintegrar stock en caso de cancelaciones o devoluciones.
-
----
-
-## 🚀 Instalación y Configuración
-
-### ✅ Requisitos Previos
-
-*   **Node.js:** v18.x o superior (verificar `engines` en `package.json` si está definido).
-*   **NPM:** v8.x o superior (o Yarn).
-*   **MySQL:** v8.x o superior (o un servidor MySQL compatible).
-*   **Git:** Para clonar el repositorio.
-
-### ⚙️ Pasos de Instalación
-
-1.  **Clonar el Repositorio:**
-    ```bash
-    git clone https://github.com/tu-usuario/api-banco-ferremax.git
-    cd api-banco-ferremax
-    ```
-
-2.  **Instalar Dependencias:**
-    ```bash
-    npm install
-    ```
-
-3.  **Configurar Variables de Entorno:**
-    Copia el archivo de ejemplo y edítalo con tus credenciales y configuraciones específicas.
-    ```bash
-    cp .env.example .env
-    nano .env  # o tu editor preferido
-    ```
-    Consulta la sección Variables de Entorno para más detalles.
-
-4.  **Configurar la Base de Datos:**
-    *   Asegúrate de que tu servidor MySQL esté en ejecución.
-    *   Crea la base de datos especificada en tu archivo `.env` (ej. `ferremax_ventas_db`).
-    *   Ejecuta las migraciones de Sequelize para crear la estructura de tablas:
-        ```bash
-        # Asumiendo que tienes scripts de migración configurados en package.json
-        # npm run db:migrate
-        # Si no hay migraciones, Sequelize podría sincronizar modelos en desarrollo (ver config)
-        ```
-    *   (Opcional) Ejecuta los seeders para poblar la base de datos con datos iniciales:
-        ```bash
-        # npm run db:seed
-        ```
-
-5.  **Iniciar la API:**
-    *   **Modo Desarrollo** (con reinicio automático gracias a Nodemon):
-        ```bash
-        npm run dev
-        ```
-    *   **Modo Producción:**
-        ```bash
-        npm start
-        ```
-    La API debería estar disponible en `http://localhost:PORT` (donde `PORT` es el valor de tu `.env`).
-
----
 
 ## 🔑 Variables de Entorno
 
-Crea un archivo `.env` en la raíz del proyecto con las siguientes variables. **Nunca subas tu archivo `.env` a un repositorio Git.**
+### 📋 Configuración Mínima (.env)
 
-```dotenv
-# ===============================
-# CONFIGURACIÓN DEL SERVIDOR
-# ===============================
-NODE_ENV=development # Opciones: development, production, test
-PORT=3001            # Puerto en el que correrá la API
+```env
+# Servidor
+NODE_ENV=development
+PORT=3001
 
-# ===============================
-# BASE DE DATOS (MySQL)
-# ===============================
+# Base de Datos
 DB_HOST=localhost
-DB_USER=tu_usuario_db
-DB_PASSWORD=tu_contraseña_segura_db
-DB_NAME=ferremax_ventas_db
-DB_PORT=3306         # Puerto de MySQL (usualmente 3306)
-DB_DIALECT=mysql     # Dialecto para Sequelize
+DB_USER=administrador
+DB_PASSWORD=tu_password_segura
+DB_NAME=ferremas_complete
+DB_PORT=3306
 
-# ===============================
-# API DE INVENTARIO
-# ===============================
-API_INVENTARIO_URL=http://localhost:3000/api # URL base de la API de Inventario
-API_INVENTARIO_KEY=tu_api_key_secreta_para_inventario # Si requiere autenticación
+# Seguridad
+JWT_SECRET=tu_jwt_secret_muy_seguro_aqui
+JWT_EXPIRES_IN=7d
 
-# ===============================
-# WEBPAY (TRANSBANK)
-# Usar credenciales de INTEGRACIÓN para desarrollo/pruebas
-# ===============================
-WEBPAY_COMMERCE_CODE=tu_codigo_de_comercio_integracion # Proporcionado por Transbank
-WEBPAY_API_KEY=tu_api_key_integracion_webpay         # Proporcionado por Transbank
-# El SDK de Transbank usualmente maneja las URLs de los endpoints (Integración/Producción)
-# basándose en el entorno configurado en el propio SDK o mediante una variable.
-# WEBPAY_ENVIRONMENT=integration # O 'production'
+# APIs Externas
+API_INVENTARIO_URL=http://localhost:3000/api
+WEBPAY_API_URL=http://localhost:3003/api/transbank
+BANCO_API_URL=https://mindicador.cl/api
 
-# ===============================
-# SEGURIDAD (JWT)
-# ===============================
-JWT_SECRET=tu_frase_secreta_muy_larga_y_aleatoria_para_jwt
-JWT_EXPIRES_IN=1h # Tiempo de expiración de los tokens (ej. 1h, 7d)
-
-# ===============================
-# OTROS (Opcional)
-# ===============================
-# API_BANCO_CENTRAL_URL=https://api.bancocentral.cl/formato_json # Ejemplo
+# WebPay (Transbank)
+WEBPAY_COMMERCE_CODE=597055555532
+WEBPAY_API_KEY=579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C
+WEBPAY_ENVIRONMENT=integration
 ```
 
----
+### 🔧 Variables Avanzadas
 
-## 📖 Documentación de Endpoints
+```env
+# CORS y Frontend
+CORS_ORIGIN=http://localhost:3004,http://localhost:3000
+FRONTEND_URL=http://localhost:3004
 
-La documentación detallada de cada endpoint, incluyendo parámetros de solicitud, esquemas de respuesta y códigos de estado, está disponible a través de:
+# Timeouts
+HTTP_TIMEOUT=30000
+API_TIMEOUT=15000
 
-*   **Colección de Postman:** [Enlace a tu Colección de Postman o instrucciones para importarla]
-*   **(Opcional) Especificación OpenAPI (Swagger):** Si está implementado, puedes acceder a la UI de Swagger en `/api-docs`.
+# Cache
+CURRENCY_CACHE_TTL=3600
+PRODUCT_CACHE_TTL=300
 
-**Prefijo base de la API:** `/api/v1` (o el que hayas configurado)
+# Rate Limiting
+RATE_LIMIT_WINDOW=15
+RATE_LIMIT_MAX_REQUESTS=100
 
-A continuación, un resumen de los principales grupos de endpoints:
+# Logs
+LOG_LEVEL=info
+LOG_TO_FILE=true
+LOG_DIRECTORY=./logs
 
-<details>
-  <summary><strong>📦 Pedidos (`/pedidos`)</strong></summary>
+# Desarrollo
+DEBUG_API_CALLS=true
+SIMULATE_BANCO_CENTRAL=true
+```
 
-  | Método | Ruta          | Descripción                                      | Autenticación |
-  |--------|---------------|--------------------------------------------------|---------------|
-  | `GET`  | `/`           | Obtener todos los pedidos (con filtros y paginación) | Requerida     |
-  | `GET`  | `/:id`        | Obtener un pedido específico por su ID           | Requerida     |
-  | `POST` | `/`           | Crear un nuevo pedido                            | Requerida     |
-  | `PUT`  | `/:id`        | Actualizar un pedido existente (completo)        | Requerida     |
-  | `PATCH`| `/:id/estado` | Actualizar el estado de un pedido                | Requerida     |
-</details>
+## 📖 Documentación de la API
 
-<details>
-  <summary><strong>📄 Detalles de Pedido (`/detalles-pedido`)</strong></summary>
+### 🔐 Autenticación
 
-  | Método | Ruta                  | Descripción                                      | Autenticación |
-  |--------|-----------------------|--------------------------------------------------|---------------|
-  | `GET`  | `/pedido/:pedidoId`   | Obtener todos los detalles de un pedido específico | Requerida     |
-  | `PATCH`| `/:id/estado`         | Actualizar estado de un ítem de detalle específico | Requerida     |
-</details>
+Todas las rutas protegidas requieren un token JWT en el header:
 
-<details>
-  <summary><strong>💸 Pagos (`/pagos`)</strong></summary>
+```http
+Authorization: Bearer <jwt_token>
+```
 
-  | Método | Ruta                  | Descripción                                      | Autenticación |
-  |--------|-----------------------|--------------------------------------------------|---------------|
-  | `GET`  | `/`                   | Obtener todos los pagos (con filtros)            | Requerida     |
-  | `GET`  | `/pedido/:pedidoId`   | Obtener todos los pagos de un pedido específico  | Requerida     |
-  | `POST` | `/`                   | Registrar un nuevo pago (manual, ej. transferencia) | Requerida     |
-  | `PATCH`| `/:id/estado`         | Actualizar el estado de un pago específico       | Requerida     |
-</details>
+### 🚪 Endpoints Principales
 
-<details>
-  <summary><strong>💳 WebPay (`/webpay`)</strong></summary>
+#### **Autenticación** (`/api/v1/auth`)
 
-  | Método | Ruta                          | Descripción                                      | Autenticación |
-  |--------|-------------------------------|--------------------------------------------------|---------------|
-  | `POST` | `/iniciar-transaccion`        | Iniciar una nueva transacción en WebPay          | Requerida     |
-  | `GET`  | `/retorno-transaccion`        | Endpoint de retorno de WebPay (éxito/fracaso)    | Pública       |
-  | `POST` | `/confirmar-transaccion`      | Confirmar una transacción de WebPay (backend)    | Pública (validada por token) |
-  | `GET`  | `/estado-transaccion/:token`  | Verificar el estado de una transacción WebPay    | Requerida     |
-</details>
+| Método | Endpoint | Descripción | Auth |
+|--------|----------|-------------|------|
+| `POST` | `/login` | Iniciar sesión | ❌ |
+| `POST` | `/register` | Registrar cliente | ❌ |
+| `GET` | `/profile` | Obtener perfil | ✅ |
+| `PUT` | `/profile` | Actualizar perfil | ✅ |
+| `POST` | `/change-password` | Cambiar contraseña | ✅ |
 
-<details>
-  <summary><strong>💱 Divisas y Tipos de Cambio (`/divisas`, `/tipos-cambio`)</strong></summary>
+#### **Ventas Completas** (`/api/v1/ventas`)
 
-  **Divisas (`/divisas`)**
-  | Método | Ruta          | Descripción                                      | Autenticación |
-  |--------|---------------|--------------------------------------------------|---------------|
-  | `GET`  | `/`           | Obtener todas las divisas disponibles            | Pública       |
-  | `POST` | `/`           | Crear una nueva divisa (Administrativo)          | Admin         |
-  | `PUT`  | `/:id`        | Actualizar una divisa (Administrativo)           | Admin         |
+| Método | Endpoint | Descripción | Auth |
+|--------|----------|-------------|------|
+| `POST` | `/crear` | Crear venta completa | ✅ |
+| `GET` | `/:pedido_id/estado` | Estado de venta | ✅ |
+| `POST` | `/:pedido_id/confirmar` | Confirmar venta | ✅ |
 
-  **Tipos de Cambio (`/tipos-cambio`)**
-  | Método | Ruta          | Descripción                                      | Autenticación |
-  |--------|---------------|--------------------------------------------------|---------------|
-  | `GET`  | `/`           | Obtener todos los tipos de cambio actuales       | Pública       |
-  | `POST` | `/convertir`  | Convertir un monto entre dos divisas             | Pública       |
-  | `POST` | `/actualizar` | Actualizar tasas de cambio (simulación, Admin)   | Admin         |
-</details>
+#### **Pedidos** (`/api/v1/pedidos`)
 
----
+| Método | Endpoint | Descripción | Auth |
+|--------|----------|-------------|------|
+| `GET` | `/` | Listar pedidos | ✅ |
+| `GET` | `/:id` | Obtener pedido | ✅ |
+| `POST` | `/` | Crear pedido | ✅ |
+| `PATCH` | `/:id/estado` | Cambiar estado | ✅ |
+
+#### **Pagos** (`/api/v1/pagos`)
+
+| Método | Endpoint | Descripción | Auth |
+|--------|----------|-------------|------|
+| `GET` | `/` | Listar pagos | ✅ |
+| `GET` | `/pedido/:pedidoId` | Pagos por pedido | ✅ |
+| `POST` | `/` | Registrar pago manual | ✅ |
+
+#### **WebPay** (`/api/v1/webpay`)
+
+| Método | Endpoint | Descripción | Auth |
+|--------|----------|-------------|------|
+| `POST` | `/iniciar` | Iniciar transacción | ✅ |
+| `POST` | `/confirmar` | Confirmar transacción | 🔒 |
+| `POST` | `/estado-transaccion` | Verificar estado | ✅ |
+
+#### **Divisas** (`/api/v1/divisas`)
+
+| Método | Endpoint | Descripción | Auth |
+|--------|----------|-------------|------|
+| `GET` | `/tipos-cambio` | Tipos de cambio actuales | ❌ |
+| `POST` | `/convertir` | Convertir entre divisas | ❌ |
+
+#### **Cliente** (`/api/v1/cliente`)
+
+| Método | Endpoint | Descripción | Auth |
+|--------|----------|-------------|------|
+| `GET` | `/pedidos` | Mis pedidos | ✅ |
+| `GET` | `/pagos` | Mis pagos | ✅ |
+| `GET` | `/resumen` | Resumen de actividad | ✅ |
+| `DELETE` | `/pedidos/:id` | Cancelar pedido | ✅ |
+
+#### **Administración** (`/api/v1/admin`)
+
+| Método | Endpoint | Descripción | Auth |
+|--------|----------|-------------|------|
+| `GET` | `/dashboard` | Panel principal | 🔑 |
+| `GET` | `/usuarios` | Listar usuarios | 🔑 |
+| `POST` | `/usuarios` | Crear usuario | 🔑 |
+| `GET` | `/estadisticas` | Estadísticas generales | 🔑 |
+
+**Leyenda**: ❌ = Público | ✅ = Requiere auth | 🔒 = Webhook | 🔑 = Solo admin
 
 ## 💡 Ejemplos de Uso
 
-A continuación, se muestran ejemplos de cómo interactuar con algunos endpoints clave usando `curl`.
+### 🔐 Autenticación
 
-### Crear un Pedido
-
-**Solicitud:**
 ```bash
-curl -X POST "http://localhost:3001/api/v1/pedidos" \
+# Iniciar sesión
+curl -X POST "http://localhost:3001/api/v1/auth/login" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer TU_TOKEN_JWT" \
   -d '{
-    "ID_Cliente": 1,
-    "ID_Sucursal": 1,
-    "detalles": [
-      { "ID_Producto": 101, "Cantidad": 2, "Precio_Unitario": 15000 },
-      { "ID_Producto": 205, "Cantidad": 1, "Precio_Unitario": 45000 }
-    ],
-    "Direccion_Entrega": "Av. Siempre Viva 742",
-    "Comentarios": "Entregar por la tarde."
+    "email": "admin@ferremas.cl",
+    "password": "admin123"
   }'
-```
 
-**Respuesta Esperada (Ejemplo):**
-```json
+# Respuesta
 {
-  "mensaje": "Pedido creado exitosamente",
-  "pedido": {
-    "ID_Pedido": 123,
-    "Codigo_Pedido": "PD-20240115-0123",
-    "Total": 75000,
-    "Estado": "Pendiente",
-    "..."
+  "success": true,
+  "message": "Login exitoso",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "email": "admin@ferremas.cl",
+    "nombre": "Administrador",
+    "role": "admin"
   }
 }
 ```
 
-### Iniciar Transacción WebPay
+### 🛒 Crear Venta Completa
 
-**Solicitud:**
 ```bash
-curl -X POST "http://localhost:3001/api/v1/webpay/iniciar-transaccion" \
+# Crear venta con verificación de stock y pago
+curl -X POST "http://localhost:3001/api/v1/ventas/crear" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer TU_TOKEN_JWT" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
-    "idPedido": 123,
-    "monto": 75000,
-    "returnUrl": "https://tufrontend.com/webpay/retorno",
-    "sessionId": "sesion_unica_del_usuario"
+    "cliente_id": 1,
+    "sucursal_id": 1,
+    "productos": [
+      {
+        "id_producto": 101,
+        "cantidad": 2,
+        "precio_unitario": 15000
+      },
+      {
+        "id_producto": 205,
+        "cantidad": 1,
+        "precio_unitario": 45000
+      }
+    ],
+    "metodo_entrega": "Despacho_Domicilio",
+    "direccion_entrega": "Av. Providencia 1234, Santiago",
+    "metodo_pago": "Crédito",
+    "divisa_cliente": "USD",
+    "comentarios": "Entrega urgente"
   }'
 ```
 
-**Respuesta Esperada (Ejemplo):**
-```json
+### 💳 Iniciar Pago WebPay
+
+```bash
+# Iniciar transacción WebPay
+curl -X POST "http://localhost:3001/api/v1/webpay/iniciar" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "idPedido": 123,
+    "monto": 75000,
+    "returnUrl": "https://tu-frontend.com/payment/return",
+    "finalUrl": "https://tu-frontend.com/payment/final"
+  }'
+
+# Respuesta
 {
   "token": "TOKEN_WEBPAY_GENERADO",
-  "url_redirect": "https://url.webpay.cl/initTransaction?token_ws=TOKEN_WEBPAY_GENERADO"
+  "url": "https://webpay3g.transbank.cl/webpayserver/initTransaction?token_ws=TOKEN_WEBPAY_GENERADO",
+  "idPago": 456
 }
 ```
 
----
+### 💱 Conversión de Divisas
 
-## 📦 Integración con API de Inventario
+```bash
+# Convertir monto entre divisas
+curl -X POST "http://localhost:3001/api/v1/divisas/convertir" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "monto": 50000,
+    "divisa_origen": "CLP",
+    "divisa_destino": "USD"
+  }'
 
-La API de Ventas y Pagos interactúa estrechamente con la API de Inventario para asegurar la consistencia de los datos.
+# Respuesta
+{
+  "success": true,
+  "data": {
+    "monto_original": 50000,
+    "monto_convertido": 55.26,
+    "divisa_origen": "CLP",
+    "divisa_destino": "USD",
+    "tasa_cambio": 904.65,
+    "fecha_conversion": "2024-01-15T10:30:00Z"
+  }
+}
+```
 
-### Verificación de Stock
-Antes de procesar un pedido, se consulta la API de Inventario para confirmar la disponibilidad de cada producto.
+## 🔗 Integración con Microservicios
+
+### 📦 API de Inventario (Puerto 3000)
+
 ```javascript
-// Ejemplo conceptual en services/inventarioService.js
-async function verificarDisponibilidad(idProducto, cantidadRequerida) {
-  const response = await axios.get(`${process.env.API_INVENTARIO_URL}/stock/${idProducto}`);
-  return response.data.disponible >= cantidadRequerida;
-}
+// Verificación automática de stock
+const stockCheck = await inventarioService.verificarStockProducto(
+  idProducto, 
+  cantidad, 
+  idSucursal
+);
+
+// Actualización automática de inventario
+await inventarioService.actualizarInventario(
+  idProducto,
+  cantidad,
+  idSucursal,
+  'Salida'
+);
 ```
 
-### Actualización de Inventario
-Una vez que un pedido es confirmado y pagado, se notifica a la API de Inventario para descontar el stock.
+### 💳 WebPay/Transbank (Puerto 3003)
+
 ```javascript
-// Ejemplo conceptual en services/inventarioService.js
-async function descontarStock(idProducto, cantidad) {
-  await axios.patch(`${process.env.API_INVENTARIO_URL}/stock/${idProducto}/descontar`, { cantidad });
-}
+// Flujo completo de pago
+const webpayResult = await webpayService.iniciarTransaccion(
+  pedidoId,
+  monto,
+  returnUrl,
+  finalUrl
+);
+
+// Confirmación automática
+const confirmation = await webpayService.confirmarTransaccion(token);
 ```
 
----
+### 🏛️ Banco Central de Chile
 
-## 🛡️ Seguridad
+```javascript
+// Obtención automática de tipos de cambio
+const tiposCambio = await bancoCentralService.obtenerTodosTiposCambio();
 
-La seguridad es una prioridad en esta API. Se han implementado las siguientes medidas:
+// Conversión con cache inteligente
+const conversion = await bancoCentralService.convertirDivisa(
+  monto, 
+  'CLP', 
+  'USD'
+);
+```
 
-*   **Autenticación JWT:** Protección de endpoints mediante JSON Web Tokens.
-*   **Validación de Datos:** Uso de librerías (ej. Joi, express-validator) para validar todas las entradas.
-*   **Hashing de Contraseñas:** Almacenamiento seguro de credenciales usando bcrypt.
-*   **Protección contra XSS y CSRF:** Implementación de medidas preventivas.
-*   **HTTPS:** Uso obligatorio en entornos de producción.
-*   **Variables de Entorno:** Gestión segura de claves y configuraciones sensibles.
-*   **CORS:** Configuración adecuada para permitir solicitudes solo desde dominios autorizados.
-*   **Rate Limiting:** Prevención de abusos mediante la limitación de tasas de solicitud.
-*   **Logging de Seguridad:** Registro de eventos relevantes para auditoría.
+## 👥 Usuarios del Sistema
 
-### 🚨 Reportar Vulnerabilidades
-Si descubres alguna vulnerabilidad de seguridad, por favor repórtala de forma responsable a `seguridad@ferremas.cl`.
+| Usuario | Email | Password | Rol | Permisos |
+|---------|-------|----------|-----|----------|
+| **Administrador** | `admin@ferremas.cl` | `admin123` | `admin` | Acceso completo |
+| **Cliente** | `cliente@test.cl` | `cliente123` | `cliente` | Compras y consultas |
+| **Vendedor** | `vendedor@ferremas.cl` | `vendedor123` | `vendedor` | Gestión de ventas |
+| **Bodeguero** | `bodeguero@ferremas.cl` | `bodeguero123` | `bodeguero` | Gestión de inventario |
 
----
+## 🧪 Testing y Desarrollo
 
-## 🧪 Pruebas
+### 🚀 Scripts Disponibles
 
-El proyecto cuenta con un conjunto de pruebas para garantizar la calidad y estabilidad del código.
+```bash
+# Desarrollo con auto-reload
+npm run dev
 
-*   **Ejecutar todas las pruebas:**
-    ```bash
-    npm test
-    ```
-*   **Ejecutar pruebas y generar informe de cobertura:**
-    ```bash
-    npm run test:coverage
-    # (Asegúrate de que este script esté definido en package.json y configurado con tu herramienta de cobertura, ej. Jest con --coverage)
-    ```
-*   **Pruebas E2E (End-to-End):**
-    ```bash
-    # npm run test:e2e (Si están configuradas)
-    ```
+# Producción
+npm start
 
-Se recomienda mantener una alta cobertura de pruebas y añadir nuevas pruebas para cada funcionalidad o corrección de errores.
+# Verificar configuración
+npm run verify
 
----
+# Probar conexiones
+npm run test:connections
 
-## ☁️ Despliegue (Consideraciones)
+# Limpiar logs
+npm run clean:logs
+```
 
-Para desplegar esta API en un entorno de producción, considera lo siguiente:
+### 🧪 Testing Manual
 
-*   **Entorno:** Asegúrate de que `NODE_ENV` esté configurado como `production`.
-*   **Process Manager:** Utiliza un gestor de procesos como PM2 para mantener la aplicación en ejecución, gestionar logs y reinicios.
-*   **Base de Datos:** Configura una base de datos MySQL de producción robusta y segura.
-*   **HTTPS:** Configura un servidor proxy inverso (ej. Nginx, Caddy) para manejar SSL/TLS.
-*   **Variables de Entorno:** Utiliza un sistema seguro para gestionar las variables de entorno en producción (ej. Vault, AWS Secrets Manager, variables de entorno del proveedor de hosting).
-*   **Logging:** Centraliza los logs en un sistema de gestión de logs (ej. ELK Stack, Splunk, Papertrail).
-*   **Monitoreo:** Implementa herramientas de monitoreo de rendimiento y errores (ej. Sentry, New Relic, Prometheus/Grafana).
-*   **Contenerización (Opcional):** Considera usar Docker y Docker Compose para facilitar el despliegue y la escalabilidad.
+```bash
+# Health check
+curl http://localhost:3001/health
 
----
+# Verificar autenticación
+curl -X POST http://localhost:3001/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@ferremas.cl","password":"admin123"}'
 
-## 🤝 Contribuciones
+# Probar conversión de divisas
+curl http://localhost:3001/api/v1/divisas/tipos-cambio
+```
 
-¡Las contribuciones son bienvenidas! Si deseas mejorar esta API, por favor sigue estos pasos:
+### 🐛 Debugging
 
-1.  **Haz un Fork** del repositorio.
-2.  **Crea una nueva rama** para tu funcionalidad o corrección: `git checkout -b feature/nombre-de-tu-feature` o `fix/descripcion-del-bug`.
-3.  **Realiza tus cambios** y asegúrate de seguir las guías de estilo del proyecto.
-4.  **Añade pruebas** para tus cambios.
-5.  **Haz commit** de tus cambios: `git commit -m "feat: Añade nueva funcionalidad X"`. (Sigue las Convenciones de Commits Semánticos).
-6.  **Empuja tus cambios** a tu fork: `git push origin feature/nombre-de-tu-feature`.
-7.  **Abre un Pull Request** hacia la rama `main` (o `develop`) del repositorio original.
+```bash
+# Habilitar logs detallados
+DEBUG_API_CALLS=true npm run dev
 
-Por favor, asegúrate de que tu PR describa claramente los cambios realizados y por qué son necesarios.
+# Simular servicios externos
+SIMULATE_BANCO_CENTRAL=true npm run dev
+
+# Logs de WebPay
+DEBUG_WEBPAY=true npm run dev
+```
+
+## 🔒 Seguridad y Buenas Prácticas
+
+### 🛡️ Medidas de Seguridad Implementadas
+
+- **JWT con expiración**: Tokens seguros con tiempo de vida limitado
+- **Bcrypt factor 12**: Hasheo robusto de contraseñas
+- **Rate limiting**: 100 requests por 15 minutos por IP
+- **CORS configurado**: Solo orígenes autorizados
+- **Validación de entrada**: Sanitización de todos los datos
+- **HTTPS obligatorio**: En producción (configuración nginx)
+- **Logs de auditoría**: Registro completo de transacciones
+
+### 📋 Checklist de Producción
+
+- [ ] Variables de entorno configuradas
+- [ ] Base de datos con backup automático
+- [ ] HTTPS configurado (nginx/caddy)
+- [ ] Rate limiting activado
+- [ ] Logs centralizados
+- [ ] Monitoreo de errores (Sentry)
+- [ ] Health checks configurados
+- [ ] WebPay en modo producción
+
+## 📊 Monitoreo y Logs
+
+### 📈 Métricas Clave
+
+- **Tiempo de respuesta promedio**: < 200ms
+- **Disponibilidad**: > 99.9%
+- **Transacciones por minuto**: Monitoreo en tiempo real
+- **Errores de WebPay**: Alertas automáticas
+- **Uso de APIs externas**: Límites y quotas
+
+### 📝 Logs Estructurados
+
+```bash
+# Ver logs en tiempo real
+tail -f logs/api-banco.log
+
+# Filtrar errores
+grep "ERROR" logs/api-banco.log
+
+# Analizar transacciones WebPay
+grep "WEBPAY" logs/api-banco.log | tail -20
+```
+
+## 🚀 Despliegue
+
+### 🐳 Docker (Recomendado)
+
+```dockerfile
+# Dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+EXPOSE 3001
+CMD ["npm", "start"]
+```
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  api-banco:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - mysql
+      
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=ferremas_complete
+```
+
+### ☁️ Servidor Tradicional
+
+```bash
+# PM2 para gestión de procesos
+npm install -g pm2
+
+# Iniciar con PM2
+pm2 start src/index.js --name "api-banco-ferremax"
+
+# Configurar autostart
+pm2 startup
+pm2 save
+```
+
+## 🤝 Contribuir
+
+### 📋 Guía de Contribución
+
+1. **Fork** el repositorio
+2. **Crea** una rama para tu feature: `git checkout -b feature/amazing-feature`
+3. **Commit** tus cambios: `git commit -m 'Add amazing feature'`
+4. **Push** a la rama: `git push origin feature/amazing-feature`
+5. **Abre** un Pull Request
+
+### 📏 Estándares de Código
+
+- **ESLint**: Configuración estándar
+- **Prettier**: Formateo automático
+- **Commits semánticos**: `feat:`, `fix:`, `docs:`
+- **Tests**: Cobertura mínima del 80%
+- **Documentación**: JSDoc para funciones públicas
+
+### 🧪 Tests Antes de PR
+
+```bash
+npm run test           # Tests unitarios
+npm run test:integration  # Tests de integración
+npm run lint           # Verificar estilo
+npm run security       # Audit de seguridad
+```
+
+## 📝 Changelog
+
+### [1.0.0] - 2024-01-15
+- ✅ **Añadido**: Sistema completo de autenticación JWT
+- ✅ **Añadido**: Integración con WebPay/Transbank
+- ✅ **Añadido**: Conversión automática de divisas
+- ✅ **Añadido**: API de ventas completas
+- ✅ **Añadido**: Panel administrativo
+- ✅ **Añadido**: Sincronización con API de Inventario
+
+### [0.9.0] - 2024-01-10
+- ✅ **Añadido**: Modelos Sequelize completos
+- ✅ **Añadido**: Controladores básicos
+- ✅ **Añadido**: Middleware de autenticación
+
+## 📞 Soporte y Contacto
+
+### 🆘 Obtener Ayuda
+
+- **Documentación**: [Wiki del proyecto](https://github.com/tu-usuario/api-banco-ferremax/wiki)
+- **Issues**: [GitHub Issues](https://github.com/tu-usuario/api-banco-ferremax/issues)
+- **Discusiones**: [GitHub Discussions](https://github.com/tu-usuario/api-banco-ferremax/discussions)
+
+### 📧 Contacto Directo
+
+- **Email del equipo**: desarrollo@ferremas.cl
+- **Slack**: #api-banco-ferremax
+- **Emergency**: +56-9-XXXX-XXXX (Solo producción)
+
+### 🐛 Reportar Bugs
+
+Usa la [plantilla de bug report](https://github.com/tu-usuario/api-banco-ferremax/issues/new?template=bug_report.md) e incluye:
+
+- Versión de Node.js
+- Versión de la API
+- Pasos para reproducir
+- Logs relevantes
+- Variables de entorno (sin secretos)
+
 ## 📄 Licencia
 
-Este proyecto está licenciado bajo los términos de la **Licencia MIT**.
-Consulta el archivo `LICENSE` para más detalles.
+Este proyecto está licenciado bajo la **Licencia MIT**. Ver [LICENSE](LICENSE) para más detalles.
+
+```
+MIT License
+
+Copyright (c) 2024 FERREMAX
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+```
 
 ---
 
-<p align="center">
-  Hecho con ❤️ por el Equipo de Desarrollo de FERREMAX
-</p>
+<div align="center">
+
+**Hecho con ❤️ por el Equipo de Desarrollo FERREMAX**
+
+⭐ **¿Te gusta el proyecto? ¡Dale una estrella!** ⭐
+
+</div>

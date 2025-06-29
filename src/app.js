@@ -34,7 +34,7 @@ const healthRoutes = require('./routes/healthRoutes');
 const ventasRoutes = require('./routes/ventasRoutes');
 const clienteRoutes = require('./routes/clienteRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-
+const transaccionesRoutes = require('./routes/transaccionesRoutes');
 // Middleware de autenticación
 const { verificarToken, verificarRol } = require('./middlewares/auth');
 
@@ -56,7 +56,7 @@ app.use('/api/v1/cliente', verificarToken, clienteRoutes);
 app.use('/api/v1/admin', verificarToken, verificarRol(['administrador']), adminRoutes);
 app.use('/api/v1/webpay', webpayRoutes); // WebPay maneja su propia autenticación
 app.use('/api/v1/tipos-cambio', tiposCambioRoutes);
-
+app.use('/api/v1/transacciones', transaccionesRoutes);
 // ===========================================
 // RUTA PRINCIPAL DE LA API
 // ===========================================
